@@ -34,7 +34,7 @@ function isAuthValid(){
     return validateKey(getUserApiKey());
 }
 
-function validateKey(authKey){
+function validateKey(authKey:string){
     var tempInst = new TogglApi(authKey);
     // Make a call to /me as simple test of auth authValidity
     var response = tempInst.getBasicAcctInfo();

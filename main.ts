@@ -1,5 +1,6 @@
 import 'google-apps-script';
 import './auth';
+import './toggl';
 
 /**
  * @author Joshua Tzucker

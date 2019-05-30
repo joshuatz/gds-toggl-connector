@@ -1,0 +1,18 @@
+{
+    "dataStudio": {
+      "name": "Toggl Timer",
+      "logoUrl": "___",
+      "company": "___",
+      "companyUrl": "___",
+      "addonUrl": "___",
+      "supportUrl": "___",
+      "description": "Get Toggl data.",
+      "sources": [
+        "Toggl"
+      ],
+      "templates": {
+        "default": ""
+      }
+    },
+    "exceptionLogging": "STACKDRIVER"
+  }

@@ -1,17 +1,30 @@
 import 'google-apps-script';
-import './main';
-import './toggl';
+import {togglApiInst} from  './main';
+import { TogglApi } from './toggl';
 
 /**
  * @author Joshua Tzucker
  */
+
+ // https://developers.google.com/datastudio/connector/reference#setcredentials
+interface credentialRequestCb {
+    "userPass": {
+        "username": string,
+        "password": string
+    },
+    "userToken": {
+        "username": string,
+        "token": string,
+    },
+    "key": string
+}
 
 /**
  * @override - https://developers.google.com/datastudio/connector/auth#getauthtype
  */
 function getAuthType(){
     // Enum
-    var authTypes = cc.AuthType;
+    let authTypes = cc.AuthType;
     // Return auth AuthType
     return cc
         .newAuthTypeResponse()
@@ -34,25 +47,28 @@ function isAuthValid(){
     return validateKey(getUserApiKey());
 }
 
-function validateKey(authKey:string){
-    var tempInst = new TogglApi(authKey);
-    // Make a call to /me as simple test of auth authValidity
-    var response = tempInst.getBasicAcctInfo();
-    return response.valid;
+function validateKey(authKey:string|null){
+    if (authKey){
+        var tempInst = new TogglApi(authKey);
+        // Make a call to /me as simple test of auth authValidity
+        var response = tempInst.getBasicAcctInfo();
+        return response.success;
+    }
+    return false;
 }
 
 /**
  * @override - https://developers.google.com/datastudio/connector/auth#setcredentials
  * NOTE: This is very special func - is a callback that gets triggered once user saves credential through UI
  */
-function setCredentials(request){
-    var key = request.key;
+function setCredentials(request:credentialRequestCb){
+    let key = request.key;
     if (!validateKey(key)){
         return {
             errorCode: 'INVALID_CREDENTIALS'
         }
     }
-    UserProperties.getUserProperties().setProperty(APIKEY_STORAGE,key);
+    PropertiesService.getUserProperties().setProperty(APIKEY_STORAGE,key);
     // Update global
     togglApiInst.setAuthToken(key);
     return {
@@ -61,5 +77,10 @@ function setCredentials(request){
 }
 
 function getUserApiKey(){
-    return PropertiesService.getUserProperties().getProperty(APIKEY_STORAGE);
+    let key: string|null = PropertiesService.getUserProperties().getProperty(APIKEY_STORAGE);
+    return key;
+}
+
+export {
+    getUserApiKey
 }

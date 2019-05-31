@@ -1,12 +1,16 @@
 import 'google-apps-script';
-import './auth';
-import './toggl';
+import * as auth from './auth';
+import { TogglApi } from './toggl';
 
 /**
  * @author Joshua Tzucker
  * Note: @override is used to denote function that is required and expected by connector implementation
  */
 
+interface schemaRequest {
+    "configParams" : object,
+    "scriptParams" : object
+}
 
 /**
  * Some app-wide constants
@@ -21,14 +25,14 @@ var APIKEY_STORAGE = 'dscc.key';
 // init connector
 var cc = DataStudioApp.createCommunityConnector();
 // Create global instance of toggl api class
-var togglApiInst = new TogglApi(getUserApiKey());
+export var togglApiInst = new TogglApi(auth.getUserApiKey());
 
 /**
  * @override
  */
 function getConfig() {
 	// Get config obj provided by gds-connector
-	var config = cc.getConfig();
+	let config = cc.getConfig();
 
 	// Set config general info
 	config.newInfo()
@@ -45,9 +49,9 @@ function getConfig() {
  * @override
  */
 function getFields(){
-    var fields = cc.getFields();
-    var types = cc.FieldType;
-    var aggregations = cc.AggregationType;
+    let fields = cc.getFields();
+    let types = cc.FieldType;
+    let aggregations = cc.AggregationType;
 
     fields
         .newDimension()
@@ -61,6 +65,6 @@ function getFields(){
 /**
  * @override
  */
-function getSchema(request) {
+function getSchema(request:schemaRequest) {
     return {schema : getFields().build()};
 }

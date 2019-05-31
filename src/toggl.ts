@@ -1,6 +1,7 @@
 import 'google-apps-script';
 /**
  * @author Joshua Tzucker
+ * @file toggl.ts
  */
 
 // Handy aliases

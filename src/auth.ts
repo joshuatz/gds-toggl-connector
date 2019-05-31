@@ -4,6 +4,7 @@ import { TogglApi } from './toggl';
 
 /**
  * @author Joshua Tzucker
+ * @file auth.ts
  */
 
  // https://developers.google.com/datastudio/connector/reference#setcredentials

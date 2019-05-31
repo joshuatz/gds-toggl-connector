@@ -1,5 +1,5 @@
 import 'google-apps-script';
-import * as auth from './auth';
+import {getUserApiKey} from './auth';
 import { TogglApi } from './toggl';
 
 /**
@@ -25,7 +25,7 @@ var APIKEY_STORAGE = 'dscc.key';
 // init connector
 var cc = DataStudioApp.createCommunityConnector();
 // Create global instance of toggl api class
-export var togglApiInst = new TogglApi(auth.getUserApiKey());
+export var togglApiInst = new TogglApi(getUserApiKey());
 
 /**
  * @override

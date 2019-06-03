@@ -8,11 +8,11 @@ import 'google-apps-script';
 type httpResponse = GoogleAppsScript.URL_Fetch.HTTPResponse;
 export class TogglApi {
     private _authToken: string;
-    private _apiBase: string;
+    private readonly _userApiBase: string = 'https://www.toggl.com/api/v8';
+    private readonly _reportApiBase: string = 'https://toggl.com/reports/api/v2';
     
-    constructor(authToken:string|null='',apiBase:string=TOGGL_API_BASE){
+    constructor(authToken:string|null=''){
         this._authToken = (authToken || '');
-        this._apiBase = apiBase;
     }
     static responseTemplate = class {
         success: boolean;
@@ -26,19 +26,29 @@ export class TogglApi {
         me_simple: "/me?with_related_data=false",
         me_full:  "/me?with_related_data=true"
     }
-    private readonly _authedFetchOptions = {
-        "headers": <object> {
-            "Content-Type" : <string> 'application/json',
-            "Authorization" : <string> this.assembleAuthHeader()
+
+    private _getAuthHeaders(){
+        return {
+            "headers": <object> {
+                "Content-Type" : <string> 'application/json',
+                "Authorization" : <string> this.assembleAuthHeader()
+            }
         }
     }
     getBasicAcctInfo(){
-        let url: string = this._apiBase + TogglApi.endpoints.me_simple;
-        let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._authedFetchOptions);
-        return TogglApi.parseJsonResponse(apiResponse);
+        let url: string = this._userApiBase + TogglApi.endpoints.me_simple;
+        Logger.log(this._getAuthHeaders());
+        try {
+            let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
+            return TogglApi.parseJsonResponse(apiResponse);
+        }
+        catch (e){
+            Logger.log(e);
+            return new TogglApi.responseTemplate();
+        }
     }
     assembleAuthHeader(){
-        return Utilities.base64Encode('Basic ' + (this._authToken + ':api_token'));
+        return 'Basic ' + Utilities.base64Encode(this._authToken + ':api_token');
     }
     setAuthToken(authToken:string){
         this._authToken = authToken;
@@ -46,6 +56,7 @@ export class TogglApi {
     static checkResponseValid(response: httpResponse){
         let validResponse: boolean = true;
         let validAuth: boolean = true;
+        let rateLimited: boolean = false;
         if (typeof(response.getResponseCode)!=='function'){
             validResponse = false;
         }
@@ -55,6 +66,10 @@ export class TogglApi {
                 if (response.getResponseCode() === 403){
                     // Forbidden
                     validAuth = false;
+                }
+                else if (response.getResponseCode() === 429){
+                    // Rate limited
+                    rateLimited = true;
                 }
             }
         }
@@ -68,7 +83,8 @@ export class TogglApi {
         }
         return {
             valid: validResponse,
-            auth: validAuth
+            auth: validAuth,
+            rateLimited: rateLimited
         }
     }
     static parseJsonResponse(response: httpResponse){

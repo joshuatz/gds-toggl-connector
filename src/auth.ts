@@ -41,6 +41,11 @@ function resetAuth(){
     PropertiesService.getUserProperties().deleteProperty(APIKEY_STORAGE);
 }
 
+function getUserApiKey(){
+    let key: string|null = PropertiesService.getUserProperties().getProperty(APIKEY_STORAGE);
+    return key;
+}
+
 /**
  * @override - https://developers.google.com/datastudio/connector/auth#isauthvalid
  */
@@ -50,6 +55,7 @@ function isAuthValid(){
 
 function validateKey(authKey:string|null){
     if (authKey){
+        Logger.log(authKey);
         var tempInst = new TogglApi(authKey);
         // Make a call to /me as simple test of auth authValidity
         var response = tempInst.getBasicAcctInfo();
@@ -75,11 +81,6 @@ function setCredentials(request:credentialRequestCb){
     return {
         errorCode : 'NONE'
     };
-}
-
-function getUserApiKey(){
-    let key: string|null = PropertiesService.getUserProperties().getProperty(APIKEY_STORAGE);
-    return key;
 }
 
 export {

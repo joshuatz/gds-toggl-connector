@@ -46,9 +46,9 @@ interface GetDataReturnObj {
  * Some app-wide constants
  */
 var AUTH_HELP_URL = 'https://toggl.com/app/profile';
-var TOGGL_API_BASE = 'https://www.toggl.com/api/v8';
 var APIKEY_STORAGE = 'dscc.key';
-
+var IS_DEBUG:boolean = true;
+var APP_USER_AGENT: string = 'https://github.com/joshuatz/gds-toggl-connector'
 /**
  * MAIN - Setup globals
  */

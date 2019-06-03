@@ -7,9 +7,39 @@ import { TogglApi } from './toggl';
  * Note: @override is used to denote function that is required and expected by connector implementation
  */
 
-interface schemaRequest {
+interface SchemaRequest {
     "configParams" : object,
     "scriptParams" : object
+}
+
+interface FieldObjNameOnly {
+    "name" : string
+}
+interface GetDataRequest {
+    "configParams": object,
+    "scriptParams": {
+        "sampleExtraction": boolean,
+        "lastRefresh": string
+    },
+    "dateRange": {
+        "startDate": string,
+        "endDate": string
+    },
+    "fields": Array<FieldObjNameOnly>
+}
+
+interface DataReturnObjRow {
+    "values" : Array<any>
+}
+
+interface DataReturnObjSchema {
+    "name" : string,
+    "dataType": string
+}
+interface GetDataReturnObj {
+    "schema" : Array<DataReturnObjSchema>,
+    "rows" : Array<DataReturnObjRow>,
+    "cachedData" : boolean
 }
 
 /**
@@ -65,6 +95,32 @@ function getFields(){
 /**
  * @override
  */
-function getSchema(request:schemaRequest) {
+function getSchema(request:SchemaRequest) {
     return {schema : getFields().build()};
+}
+
+/**
+ * @override
+ */
+function getData(request:GetDataRequest){
+    let returnData: GetDataReturnObj = {
+        "cachedData" : false,
+        "schema" : [
+            {
+                "name" : "",
+                "dataType" : ""
+            }
+        ],
+        "rows" : [
+            {
+                "values" : []
+            }
+        ]
+    }
+    let lastRefreshedTime:Date = new Date(request.scriptParams.lastRefresh);
+    let dateRangeStart:Date = new Date(request.dateRange.startDate);
+    let dateRangeEnd:Date = new Date(request.dateRange.endDate);
+
+    // @TODO
+    return returnData;
 }

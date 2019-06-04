@@ -6,6 +6,63 @@ import 'google-apps-script';
 
 // Handy aliases
 type httpResponse = GoogleAppsScript.URL_Fetch.HTTPResponse;
+
+// Some toggl interfaces
+interface TogglReportResponse {
+    total_grand: number|null,
+    total_billable: number|null,
+    total_currencies: null|[{
+        currency: string|null,
+        amount: number|null
+    }];
+}
+/**
+ * Entry summary belong to a specific project. Returned by requests that request grouping by report
+ */
+interface TogglProjectSummaryEntry {
+    title : {
+        client: null|string,
+        project: null|string,
+        color?: null|string,
+        hex_color?: null|string
+    },
+    pid: null|number,
+    totals: Array<null|number>,
+    details: Array<{
+        uid: number,
+        title : {
+            user: string
+        },
+        totals: Array<null|number>
+    }>
+}
+
+interface TogglDetailedEntry {
+    id: number,
+    pid: null|number,
+    tid: null|number,
+    uid: number,
+    description: string,
+    start: string,
+    end: string,
+    updated: string,
+    dur: number,
+    user: string,
+    use_stop: boolean,
+    client: null|string,
+    project: null|string,
+    project_color?: null|string,
+    project_hex_color?: null|string,
+    task: null|string,
+    billable: null|number,
+    is_billable: boolean,
+    cur: null|string,
+    tags: Array<string>
+}
+interface TogglDetailedReportResponse extends TogglReportResponse {
+    data: Array<TogglDetailedEntry>
+}
+
 export class TogglApi {
     private _authToken: string;
     private readonly _userApiBase: string = 'https://www.toggl.com/api/v8';
@@ -23,8 +80,13 @@ export class TogglApi {
         }
     }
     static readonly endpoints = {
-        me_simple: "/me?with_related_data=false",
-        me_full:  "/me?with_related_data=true"
+        user : {
+            me_simple: "/me?with_related_data=false",
+            me_full:  "/me?with_related_data=true"
+        },
+        reports : {
+            weekly : "/weekly"
+        }
     }
 
     private _getAuthHeaders(){
@@ -35,8 +97,9 @@ export class TogglApi {
             }
         }
     }
+
     getBasicAcctInfo(){
-        let url: string = this._userApiBase + TogglApi.endpoints.me_simple;
+        let url: string = this._userApiBase + TogglApi.endpoints.user.me_simple;
         Logger.log(this._getAuthHeaders());
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());

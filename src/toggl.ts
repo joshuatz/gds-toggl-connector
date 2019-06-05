@@ -1,4 +1,5 @@
 import 'google-apps-script';
+import './helpers';
 /**
  * @author Joshua Tzucker
  * @file toggl.ts
@@ -8,6 +9,54 @@ import 'google-apps-script';
 type httpResponse = GoogleAppsScript.URL_Fetch.HTTPResponse;
 
 // Some toggl interfaces
+
+/**
+ * Request interfaces
+ */
+interface TogglReportRequestParams {
+    user_agent: string,
+    workspace_id: number,
+    since?: Date,
+    until?: Date, // YYYY-MM-DD
+    billable?: "both"|"yes"|"no",
+    client_ids?: Array<number>|"0",
+    project_ids?: Array<number>|"0",
+    user_ids?: Array<number>,
+    members_of_group_ids?: Array<number>,
+    tag_ids?: Array<number>|"0",
+    task_ids?: Array<number>|"0",
+    time_entry_ids?: Array<number>,
+    description?: string,
+    without_description?: boolean,
+    order_desc?: "on"|"off",
+    distinct_rates?: "on"|"off",
+    rounding?: "on"|"off",
+    display_hours?: "minutes"|"decimal"
+}
+
+// https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
+interface TogglDetailedReportRequestParams extends TogglReportRequestParams {
+    order_fields?: "date"|"description"|"duration"|"user",
+    page: number
+}
+
+// https://github.com/toggl/toggl_api_docs/blob/master/reports/summary.md
+interface TogglSummaryReportRequestParams extends TogglReportRequestParams {
+    order_fields?: "title"|"duration"|"amount"
+    grouping?: "projects"|"clients"|"users"
+    subgrouping?: "time_entries"|"tasks"|"projects"|"users"
+}
+
+// https://github.com/toggl/toggl_api_docs/blob/master/reports/weekly.md
+interface TogglWeeklyReportRequestParams extends TogglReportRequestParams {
+    order_field?: "title"|"day1"|"day2"|"day3"|"day4"|"day5"|"day6"|"day7"|"week_total"
+    grouping?: "projects"|"users",
+    calculate?: "time"|"earnings",
+}
+
+/**
+ * Response Interfaces
+ */
 interface TogglReportResponse {
     total_grand: number|null,
     total_billable: number|null,
@@ -62,6 +111,8 @@ interface TogglDetailedEntry {
 interface TogglDetailedReportResponse extends TogglReportResponse {
     data: Array<TogglDetailedEntry>
 }
+
+
 
 export class TogglApi {
     private _authToken: string;
@@ -165,5 +216,11 @@ export class TogglApi {
         parsed.success = valid;
         parsed.data = json;
         return parsed;
+    }
+
+    static requestParamsToQueryString(requestParams:TogglDetailedReportRequestParams|TogglSummaryReportRequestParams|TogglWeeklyReportRequestParams){
+        let finalQueryString = '';
+        // @TODO
+        return finalQueryString;
     }
 }

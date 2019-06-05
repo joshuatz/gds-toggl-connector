@@ -20,10 +20,10 @@ interface FieldObjNameOnly {
  * Note: Fields correspond to names provided by getSchema/getFields
  */
 interface GetDataRequest {
-    "configParams": object,
-    "scriptParams": {
+    "configParams"?: object,
+    "scriptParams"?: {
         "sampleExtraction"?: boolean,
-        "lastRefresh": string
+        "lastRefresh"?: string
     },
     "dateRange": {
         "startDate": string,
@@ -36,14 +36,33 @@ interface DataReturnObjRow {
     "values" : Array<any>
 }
 
-interface DataReturnObjSchema {
-    "name" : string,
-    "dataType": string
-}
 interface GetDataReturnObj {
-    "schema" : Array<DataReturnObjSchema>,
+    "schema" : Array<{}>|Array<DataStudioFieldBuilt>,
     "rows" : Array<DataReturnObjRow>,
     "cachedData" : boolean
+}
+
+// https://developers.google.com/datastudio/connector/reference#datatype
+enum DataStudioSchemaDataType {
+    'STRING',
+    'NUMBER',
+    'BOOLEAN'
+}
+
+// https://developers.google.com/datastudio/connector/semantics
+// This should be an obj output, per field, as result of Fields.build()
+interface DataStudioFieldBuilt {
+    dataType: DataStudioSchemaDataType,
+    name: string,
+    label: string,
+    descrption?: string,
+    isDefault?: boolean,
+    semantics: {
+        conceptType: 'DIMENSION'|'METRIC',
+        semanticType: GoogleAppsScript.Data_Studio.FieldType,
+        semanticGroup?: GoogleAppsScript.Data_Studio.FieldType,
+        isReaggregatable?: boolean
+    }
 }
 
 /**
@@ -122,7 +141,7 @@ function getFields(){
     fields
         .newMetric()
         .setId('time')
-        .setName('time')
+        .setName('Time')
         .setDescription('Logged Time')
         .setType(types.DURATION)
 
@@ -140,31 +159,76 @@ function getSchema(request:SchemaRequest) {
  * @override
  * https://developers.google.com/datastudio/connector/reference#getdata
  * Should return: https://developers.google.com/datastudio/connector/reference#response_3
- *   - Schema and rows should match
+ *   - Schema and rows should match in length (one should be the dimension used)
  *   - Response should match what was requested {request.fields}
+ *   - Data types - https://developers.google.com/datastudio/connector/reference#semantictype
+ * Notes:
+ *   - Badly documented, but the array of field names [{name:"foobar"}] is misleading - they are not names, they are the original IDs of the fields...
+ *        - Furthermore, schema should be the result of Fields.build(), which has specialized output that looks like this:
+ *               // [{
+ *               //     "dataType": "STRING",
+ *               //     "name": "day",
+ *               //     "label": "Date",
+ *               //     "semantics": {
+ *               //         "conceptType": "DIMENSION",
+ *               //         "semanticType": "YEAR_MONTH_DAY"
+ *               //     }
+ *               // }, {
+ *               //     "dataType": "STRING",
+ *               //     "name": "time",
+ *               //     "description": "Logged Time",
+ *               //     "label": "Time",
+ *               //     "semantics": {
+ *               //         "isReaggregatable": true,
+ *               //         "conceptType": "METRIC",
+ *               //         "semanticType": "DURATION"
+ *               //     }
+ *               // }]
+ *   - Rows is also confusing - instead of each column (dimension|metric) being an object with a values array that contains rows, it is that each row is an object with a values array that contains columns.
  */
 function getData(request:GetDataRequest){
     Logger.log(request);
-    let requestedFieldNames: Array<string> = request.fields.map(field=>field.name);
+    console.log(request);
+    let types = cc.FieldType;
+    let requestedFieldNames: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
     let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(requestedFieldNames);
     let returnData: GetDataReturnObj = {
         "cachedData" : false,
-        "schema" : [
-            {
-                "name" : "",
-                "dataType" : ""
-            }
-        ],
+        "schema" : requestedFields.build(),
         "rows" : [
             {
-                "values" : []
+                "values" : [
+                    '20170317','100'
+                ]
+            },
+            {
+                "values" : [
+                    '20170318','2005523'
+                ]
             }
         ]
     }
-    let lastRefreshedTime:Date = new Date(request.scriptParams.lastRefresh);
+    console.log(returnData);
+    console.log(JSON.stringify(requestedFields.build(),null,4));
+    let lastRefreshedTime:Date;
+    if (typeof(request.scriptParams)==='object' && typeof(request.scriptParams.lastRefresh)==='string'){
+        lastRefreshedTime = new Date(request.scriptParams.lastRefresh);
+    }
+    else {
+        lastRefreshedTime = new Date(new Date().getTime() - (12*60*60*1000));
+    }
     let dateRangeStart:Date = new Date(request.dateRange.startDate);
     let dateRangeEnd:Date = new Date(request.dateRange.endDate);
 
     // @TODO
     return returnData;
 }
+
+/**
+ * @override
+ * @TODO - right now simply used to suppress errors that this func should exist
+ */
+function isAdminUser(){
+    return false;
+}
+

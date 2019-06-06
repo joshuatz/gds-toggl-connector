@@ -1,4 +1,4 @@
-function leftPad(input:string,padWith:string,length:number){
+export function leftPad(input:string,padWith:string,length:number){
     let output:string = input;
     while (output.length < length){
         output = padWith + output;
@@ -6,7 +6,7 @@ function leftPad(input:string,padWith:string,length:number){
     return output;
 }
 
-function formatDateAsGds(date:Date|string){
+export function formatDateAsGds(date:Date|string){
     let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : date;
     let year:string = dateToFormat.getFullYear().toString();
     let month: string = (dateToFormat.getMonth()+1).toString();

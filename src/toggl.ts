@@ -1,5 +1,6 @@
 import 'google-apps-script';
 import './helpers';
+import { formatDateAsGds } from './helpers';
 /**
  * @author Joshua Tzucker
  * @file toggl.ts
@@ -13,7 +14,7 @@ type httpResponse = GoogleAppsScript.URL_Fetch.HTTPResponse;
 /**
  * Request interfaces
  */
-interface TogglReportRequestParams {
+export interface TogglReportRequestParams {
     user_agent: string,
     workspace_id: number,
     since?: Date,
@@ -57,7 +58,7 @@ interface TogglWeeklyReportRequestParams extends TogglReportRequestParams {
 /**
  * Response Interfaces
  */
-interface TogglReportResponse {
+export interface TogglStandardReportResponse {
     total_grand: number|null,
     total_billable: number|null,
     total_currencies: null|[{
@@ -68,7 +69,7 @@ interface TogglReportResponse {
 /**
  * Entry summary belong to a specific project. Returned by requests that request grouping by report
  */
-interface TogglProjectSummaryEntry {
+export interface TogglProjectSummaryEntry {
     title : {
         client: null|string,
         project: null|string,
@@ -86,7 +87,8 @@ interface TogglProjectSummaryEntry {
     }>
 }
 
-interface TogglDetailedEntry {
+
+export interface TogglDetailedEntry {
     id: number,
     pid: null|number,
     tid: null|number,
@@ -108,19 +110,48 @@ interface TogglDetailedEntry {
     cur: null|string,
     tags: Array<string>
 }
-interface TogglDetailedReportResponse extends TogglReportResponse {
+export interface TogglDetailedReportResponse extends TogglStandardReportResponse {
     data: Array<TogglDetailedEntry>
+}
+
+export interface TogglSummaryEntry {
+    id: null|number,
+    title: {
+        project?: string,
+        client?: string,
+        user?: string
+        color?: string,
+        hex_color?: string
+    },
+    items: Array<{
+        title: {
+            project?: string,
+            client?: string,
+            user?: string,
+            task?: string,
+            time_entry?: string
+        },
+        time: number,
+        cur:null|string,
+        sum:null|number,
+        rate:null|number
+    }>
+}
+export interface TogglSummaryReportResponse extends TogglStandardReportResponse {
+    data: Array<TogglSummaryEntry>
 }
 
 
 
 export class TogglApi {
     private _authToken: string;
+    private _userAgent: string;
     private readonly _userApiBase: string = 'https://www.toggl.com/api/v8';
     private readonly _reportApiBase: string = 'https://toggl.com/reports/api/v2';
     
-    constructor(authToken:string|null=''){
+    constructor(authToken:string|null='',userAgent:string|null=APP_USER_AGENT){
         this._authToken = (authToken || '');
+        this._userAgent = userAgent;
     }
     static responseTemplate = class {
         success: boolean;
@@ -136,7 +167,9 @@ export class TogglApi {
             me_full:  "/me?with_related_data=true"
         },
         reports : {
-            weekly : "/weekly"
+            weekly : "/weekly",
+            detailed: "/details",
+            summary: "/summary"
         }
     }
 
@@ -151,7 +184,6 @@ export class TogglApi {
 
     getBasicAcctInfo(){
         let url: string = this._userApiBase + TogglApi.endpoints.user.me_simple;
-        Logger.log(this._getAuthHeaders());
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
             return TogglApi.parseJsonResponse(apiResponse);
@@ -159,6 +191,23 @@ export class TogglApi {
         catch (e){
             Logger.log(e);
             return new TogglApi.responseTemplate();
+        }
+    }
+    getDetailedReport(workspaceId:number,since:Date,until:Date){
+        let page = 1
+        let requestParams: TogglDetailedReportRequestParams = {
+            workspace_id: workspaceId,
+            user_agent: this._userAgent,
+            since: since,
+            until: until,
+            page: page
+        }
+        let url: string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
+        try {
+            // let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = 
+        }
+        catch (e){
+            //
         }
     }
     assembleAuthHeader(){
@@ -184,6 +233,7 @@ export class TogglApi {
                 else if (response.getResponseCode() === 429){
                     // Rate limited
                     rateLimited = true;
+                    // @TODO start back-off procedure and delay/sleep until ready
                 }
             }
         }
@@ -201,6 +251,10 @@ export class TogglApi {
             rateLimited: rateLimited
         }
     }
+    /**
+     * Simple wrapper around parsing JSON response from API with try/catch
+     * @param response {object} - {success:bool, data: responseJson}
+     */
     static parseJsonResponse(response: httpResponse){
         let parsed = new TogglApi.responseTemplate;
         let json: object = {};
@@ -217,10 +271,46 @@ export class TogglApi {
         parsed.data = json;
         return parsed;
     }
-
+    /**
+     * A helper function to turn key/value pairs object into stringified query string for GET endpoint
+     * @param requestParams A set of key/value pairs that correspond to a given toggl endpoint and are accepted as querystring params to control the response.
+     */
     static requestParamsToQueryString(requestParams:TogglDetailedReportRequestParams|TogglSummaryReportRequestParams|TogglWeeklyReportRequestParams){
         let finalQueryString = '';
-        // @TODO
+        let index = 0;
+        for (let key in requestParams){
+            let val = requestParams[key];
+            let stringifiedVal:string;
+            // Date
+            if (typeof(val.getTime)==='function'){
+                stringifiedVal = formatDateAsGds(val);
+            }
+            // Array
+            else if (Array.isArray(val)){
+                // Toggl uses comma sep vals, to calling Array.toString() should be fine.
+                stringifiedVal = val.toString();
+            }
+            // boolean
+            else if (typeof(val)==='boolean'){
+                // Toggl accepts boolean as string, not binary, so keep to "true" or "false"
+                stringifiedVal = val.toString();
+            }
+            else if(typeof(val)==='number'){
+                stringifiedVal = val.toString();
+            }
+            else if (typeof(val)==='string'){
+                stringifiedVal = val;
+            }
+            else {
+                // This should not get hit, but just in case...
+                stringifiedVal = val.toString();
+            }
+            if (index > 0){
+                finalQueryString += '&';
+            }
+            finalQueryString += key + '=' + encodeURI(val);
+            index++;
+        }
         return finalQueryString;
     }
 }

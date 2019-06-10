@@ -253,10 +253,9 @@ function getData(request:GetDataRequest){
     let dateRangeEnd:Date = new Date(request.dateRange.endDate);
 
     // Certain things in what is requested can change how route used to retrieve data...
-    let dateDimensionRequired:boolean = requestedFieldIds.includes('day');
-    let projectDimensionRequired:boolean = (requestedFieldIds.includes('projectId')||requestedFieldIds.includes('projectName'));
-
-
+    let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
+    let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
+    let clientDimensionRequired:boolean = (requestedFieldIds.indexOf('clientId')!==-1||requestedFieldIds.indexOf('clientName')!==-1);
 
     let returnData: GetDataReturnObj = {
         "cachedData" : false,

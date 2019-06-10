@@ -15,6 +15,7 @@ type httpResponse = GoogleAppsScript.URL_Fetch.HTTPResponse;
  * Request interfaces
  */
 export interface TogglReportRequestParams {
+    [index: string] : any,
     user_agent: string,
     workspace_id: number,
     since?: Date,
@@ -66,27 +67,6 @@ export interface TogglStandardReportResponse {
         amount: number|null
     }];
 }
-/**
- * Entry summary belong to a specific project. Returned by requests that request grouping by report
- */
-export interface TogglProjectSummaryEntry {
-    title : {
-        client: null|string,
-        project: null|string,
-        color?: null|string,
-        hex_color?: null|string
-    },
-    pid: null|number,
-    totals: Array<null|number>,
-    details: Array<{
-        uid: number,
-        title : {
-            user: string
-        },
-        totals: Array<null|number>
-    }>
-}
-
 
 export interface TogglDetailedEntry {
     id: number,
@@ -112,6 +92,49 @@ export interface TogglDetailedEntry {
 }
 export interface TogglDetailedReportResponse extends TogglStandardReportResponse {
     data: Array<TogglDetailedEntry>
+}
+
+/**
+ * Entry summary belong to a specific project. Returned by requests that request grouping by report
+ */
+export interface TogglProjectGroupedEntry {
+    title : {
+        client: null|string,
+        project: null|string,
+        color?: null|string,
+        hex_color?: null|string
+    },
+    pid: null|number,
+    totals: Array<null|number>,
+    details: Array<{
+        uid: null|number,
+        title : {
+            user: string
+        },
+        totals: Array<null|number>
+    }>
+}
+
+export interface TogglUserGroupedEntry {
+    title : {
+        user: string
+    },
+    uid: number,
+    totals: Array<null|number>,
+    details: Array<{
+        pid?: null|number,
+        title: {
+            client: null|string,
+            project: null|string,
+            color?: null|string,
+            hex_color?: null|string
+        },
+        totals: Array<null|number>
+    }>
+}
+
+export interface TogglWeeklyReportResponse extends TogglStandardReportResponse {
+    data: Array<TogglProjectGroupedEntry|TogglUserGroupedEntry>
 }
 
 export interface TogglSummaryEntry {
@@ -151,7 +174,7 @@ export class TogglApi {
     
     constructor(authToken:string|null='',userAgent:string|null=APP_USER_AGENT){
         this._authToken = (authToken || '');
-        this._userAgent = userAgent;
+        this._userAgent = (userAgent || APP_USER_AGENT);
     }
     static responseTemplate = class {
         success: boolean;

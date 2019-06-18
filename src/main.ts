@@ -1,6 +1,6 @@
 import 'google-apps-script';
 import {getUserApiKey} from './auth';
-import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse } from './toggl';
+import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse,TogglDetailedEntry, TogglStandardReportResponse,TogglSummaryEntry, usedTogglResponseTypes } from './toggl';
 
 /**
  * @author Joshua Tzucker
@@ -111,6 +111,13 @@ function getConfig() {
 
 	// Make sure to return the built config
 	return config.build();
+}
+
+/**
+ * To keep things clean and help with type checking, I'm maintaining a list of fields separately from getFields that will be used on both ends - prepping the fields and parsing return data
+ */
+interface fieldMapping {
+
 }
 
 /**
@@ -290,6 +297,33 @@ function isAdminUser(){
     return false;
 }
 
-function mapTogglResponseToGdsFields(response:TogglDetailedReportResponse){
-    //
+function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studio.Fields,response:TogglDetailedReportResponse|TogglSummaryReportResponse,responseType:usedTogglResponseTypes){
+    let mappedData: Array<DataReturnObjRow> = [];
+    // Loop over response entries
+    for (let x=0; x<response.data.length; x++){
+        let entry = response.data[x];
+        if (responseType === usedTogglResponseTypes.TogglDetailedReportResponse){
+
+        }
+        else if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
+
+        }
+    }
+    // @TODO
+    return mappedData;
+}
+
+function extractPrimaryDimensions(requestedFields:GoogleAppsScript.Data_Studio.Fields){
+    let dimensions = {
+
+    }
+}
+
+let gdsTogglMap = {
+    projectId : {
+        togglKeys: ['pid']
+    },
+    startedAtHour : {
+        togglKeys: ['start']
+    }
 }

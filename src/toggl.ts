@@ -1,6 +1,6 @@
 import 'google-apps-script';
 import './helpers';
-import { formatDateAsGds } from './helpers';
+import { Converters } from './helpers';
 /**
  * @author Joshua Tzucker
  * @file toggl.ts
@@ -164,6 +164,12 @@ export interface TogglSummaryReportResponse extends TogglStandardReportResponse 
     data: Array<TogglSummaryEntry>
 }
 
+export enum usedTogglResponseTypes {
+    TogglDetailedReportResponse,
+    TogglWeeklyReportResponse,
+    TogglSummaryReportResponse
+}
+
 
 
 export class TogglApi {
@@ -306,7 +312,7 @@ export class TogglApi {
             let stringifiedVal:string;
             // Date
             if (typeof(val.getTime)==='function'){
-                stringifiedVal = formatDateAsGds(val);
+                stringifiedVal = Converters.formatDateForTogglApi(val);
             }
             // Array
             else if (Array.isArray(val)){

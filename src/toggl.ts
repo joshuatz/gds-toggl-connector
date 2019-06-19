@@ -169,6 +169,12 @@ export enum usedTogglResponseTypes {
     TogglWeeklyReportResponse,
     TogglSummaryReportResponse
 }
+export enum usedToggleResponseEntriesTypes {
+    TogglDetailedEntry,
+    TogglProjectGroupedEntry,
+    TogglUserGroupedEntry,
+    TogglSummaryEntry
+}
 
 
 

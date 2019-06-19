@@ -6,6 +6,12 @@ export function leftPad(input:string,padWith:string,length:number){
     return output;
 }
 
+// Based on https://stackoverflow.com/a/6394168/11447682
+// Returns undefined if can't find it in recursion
+export function recurseFromString(obj:{},dotNotatString:string){
+	return dotNotatString.split('.').reduce(function(obj,i){return obj[i]},obj);
+}
+
 export class Converters {
     static getQuarterFromMonth(month:number){
         if (month <= 3){

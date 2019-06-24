@@ -190,10 +190,10 @@ export class TogglApi {
     }
     static responseTemplate = class {
         success: boolean;
-        data: object;
-        constructor(success:boolean=false, data:object={}){
+        raw: object;
+        constructor(success:boolean=false, raw:object={}){
             this.success = success;
-            this.data = data;
+            this.raw = raw;
         }
     }
     static readonly endpoints = {
@@ -234,11 +234,11 @@ export class TogglApi {
         try {
             let startResult = await this.getDetailedReport(workspaceId,since,until,currPage);
             // Need to check for pagination...
-            if (startResult.success && startResult.data['per_page'] && startResult.data['total_count']){
-                let numPerPage:number = startResult.data['per_page'];
+            if (startResult.success && startResult.raw['per_page'] && startResult.raw['total_count']){
+                let numPerPage:number = startResult.raw['per_page'];
                 let fetchedNum:number = numPerPage * currPage;
-                let resultArr:Array<any> = startResult
-                if (fetchedNum < startResult.data['total_count']){
+                let resultArr:Array<any> = startResult.raw['data'];
+                if (fetchedNum < startResult.raw['total_count']){
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice
                     while (!done){
@@ -340,7 +340,7 @@ export class TogglApi {
             }
         }
         parsed.success = valid;
-        parsed.data = json;
+        parsed.raw = json;
         return parsed;
     }
     /**

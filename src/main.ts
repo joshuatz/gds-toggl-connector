@@ -334,7 +334,9 @@ function getSchema(request:SchemaRequest) {
  */
 function getData(request:GetDataRequest){
     Logger.log(request);
-    console.log(request);
+
+    // FLAG - request is missing required info
+    let blocker = false;
 
     // Grab fields off incoming request
     let types = cc.FieldType;
@@ -357,7 +359,21 @@ function getData(request:GetDataRequest){
     let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
     let clientDimensionRequired:boolean = (requestedFieldIds.indexOf('clientId')!==-1||requestedFieldIds.indexOf('clientName')!==-1);
 
-    
+    // Extract config configParams
+    if (request.configParams){
+        // @todo - check for valid params, block if not found, and fill workspace id
+    }
+
+    // Get ready to hold response from API before conversion
+    let apiResponse = new TogglApi.responseTemplate();
+
+    if (dateDimensionRequired){
+        // The only request type that a date dimension is the detailed report
+        // apiResponse = togglApiInst.getDetailsReportAllPages()
+    }
+    else {
+        //
+    }
 
     let returnData: GetDataReturnObj = {
         "cachedData" : false,

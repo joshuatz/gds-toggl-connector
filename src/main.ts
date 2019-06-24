@@ -356,6 +356,8 @@ function getData(request:GetDataRequest){
     let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
     let clientDimensionRequired:boolean = (requestedFieldIds.indexOf('clientId')!==-1||requestedFieldIds.indexOf('clientName')!==-1);
 
+    
+
     let returnData: GetDataReturnObj = {
         "cachedData" : false,
         "schema" : requestedFields.build(),

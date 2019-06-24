@@ -225,24 +225,61 @@ export class TogglApi {
         }
         catch (e){
             Logger.log(e);
-            return new TogglApi.responseTemplate();
+            return new TogglApi.responseTemplate(false);
         }
     }
-    getDetailedReport(workspaceId:number,since:Date,until:Date){
-        let page = 1
+    async getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
+        let currPage = (startPage || 1);
+        let done = false;
+        try {
+            let startResult = await this.getDetailedReport(workspaceId,since,until,currPage);
+            // Need to check for pagination...
+            if (startResult.success && startResult.data['per_page'] && startResult.data['total_count']){
+                let numPerPage:number = startResult.data['per_page'];
+                let fetchedNum:number = numPerPage * currPage;
+                let resultArr:Array<any> = startResult
+                if (fetchedNum < startResult.data['total_count']){
+                    // Need to make request for next page.
+                    // make sure to be aware of toggl 1 req/sec advice
+                    while (!done){
+
+                    }
+                }
+                else {
+                    done = true;
+                    return startResult;
+                }
+            }
+            else {
+                done = true;
+                return startResult;
+            }
+        }
+        catch (e){
+            Logger.log(e);
+            return new TogglApi.responseTemplate(false);
+        }
+    }
+    async getDetailedReport(workspaceId:number,since:Date,until:Date,page?:number){
+        let currPage = (page || 1);
         let requestParams: TogglDetailedReportRequestParams = {
             workspace_id: workspaceId,
             user_agent: this._userAgent,
             since: since,
             until: until,
-            page: page
+            page: currPage
         }
         let url: string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
+        url = TogglApi.requestParamsToQueryString(requestParams,url);
         try {
-            // let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = 
+            let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
+            // @TODO refactor to use typed results (:TogglDetailedReportResponse)
+            let result = TogglApi.parseJsonResponse(apiResponse);
+            return result;
         }
         catch (e){
-            //
+            Logger.log(e);
+            return new TogglApi.responseTemplate();
         }
     }
     assembleAuthHeader(){
@@ -310,8 +347,9 @@ export class TogglApi {
      * A helper function to turn key/value pairs object into stringified query string for GET endpoint
      * @param requestParams A set of key/value pairs that correspond to a given toggl endpoint and are accepted as querystring params to control the response.
      */
-    static requestParamsToQueryString(requestParams:TogglDetailedReportRequestParams|TogglSummaryReportRequestParams|TogglWeeklyReportRequestParams){
+    static requestParamsToQueryString(requestParams:TogglDetailedReportRequestParams|TogglSummaryReportRequestParams|TogglWeeklyReportRequestParams,urlToAppendTo?:string){
         let finalQueryString = '';
+        let finalResult = '';
         let index = 0;
         for (let key in requestParams){
             let val = requestParams[key];
@@ -340,12 +378,24 @@ export class TogglApi {
                 // This should not get hit, but just in case...
                 stringifiedVal = val.toString();
             }
+            // Actually join together
             if (index > 0){
                 finalQueryString += '&';
             }
             finalQueryString += key + '=' + encodeURI(val);
             index++;
         }
-        return finalQueryString;
+        if (urlToAppendTo){
+            if (/\?/.test(urlToAppendTo)){
+                finalResult = urlToAppendTo + '&' + finalQueryString;
+            }
+            else {
+                finalResult = urlToAppendTo + '?' + finalQueryString;
+            }
+        }
+        else {
+            finalResult = finalQueryString;
+        }
+        return finalResult;
     }
 }

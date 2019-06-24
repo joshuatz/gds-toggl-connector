@@ -3,7 +3,12 @@
     "version": "0.0.1",
     "description": "Toggl Connector for Google Data Studio",
     "main": "main.ts",
-    "fileOrder": ["helpers.ts", "toggl.ts", "main.ts", "auth.ts"],
+    "fileOrder": [
+        "helpers.ts",
+        "toggl.ts",
+        "main.ts",
+        "auth.ts"
+    ],
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prep-ts": "node prep-ts.js",
@@ -12,6 +17,7 @@
     "author": "Joshua Tzucker",
     "dependencies": {
         "@types/google-apps-script": "0.0.51",
+        "es6-promise": "^4.2.8",
         "typescript": "^3.5.1"
     },
     "devDependencies": {

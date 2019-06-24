@@ -6,10 +6,12 @@ import { Converters, recurseFromString } from './helpers';
 /**
  * @author Joshua Tzucker
  * Note: @override is used to denote function that is required and expected by connector implementation
+ * REMINDER TO SELF: Use console.log() instead of Logger.log(), if you want logs to show up in StackDriver!
  */
 
  // Handy aliases
- let fieldTypeEnum = GoogleAppsScript.Data_Studio.FieldType;
+ // make sure to grab enum from DataStudioApp, not GoogleAppsScript, since that won't exist in GAS online
+ let fieldTypeEnum = DataStudioApp.createCommunityConnector().FieldType;
 
 interface SchemaRequest {
     "configParams" : object,
@@ -333,7 +335,8 @@ function getSchema(request:SchemaRequest) {
  *   - Rows is also confusing - instead of each column (dimension|metric) being an object with a values array that contains rows, it is that each row is an object with a values array that contains columns.
  */
 function getData(request:GetDataRequest){
-    Logger.log(request);
+    console.log(JSON.stringify(request));
+    // console.log(request);
 
     // FLAG - request is missing required info
     let blocker = false;
@@ -391,8 +394,8 @@ function getData(request:GetDataRequest){
             }
         ]
     }
-    console.log(returnData);
-    console.log(JSON.stringify(requestedFields.build(),null,4));
+    // console.log(returnData);
+    // console.log(JSON.stringify(requestedFields.build(),null,4));
     
 
     

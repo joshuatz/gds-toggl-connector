@@ -1,6 +1,8 @@
 import 'google-apps-script';
 import './helpers';
 import { Converters } from './helpers';
+import 'es6-promise';
+
 /**
  * @author Joshua Tzucker
  * @file toggl.ts

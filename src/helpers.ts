@@ -72,7 +72,7 @@ export class Converters {
     }
 
     static formatDateForGds(date:Date|string,gdsDateType:GoogleAppsScript.Data_Studio.FieldType){
-        let fieldTypes = GoogleAppsScript.Data_Studio.FieldType;
+        let fieldTypes = DataStudioApp.createCommunityConnector().FieldType;
         try {
             let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : date;
             let dateParts = Converters.getDateParts(dateToFormat);

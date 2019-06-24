@@ -69,6 +69,7 @@ export interface TogglStandardReportResponse {
 }
 
 export interface TogglDetailedEntry {
+    [index:string] : any,
     id: number,
     pid: null|number,
     tid: null|number,
@@ -138,6 +139,7 @@ export interface TogglWeeklyReportResponse extends TogglStandardReportResponse {
 }
 
 export interface TogglSummaryEntry {
+    [index: string] : any,
     id: null|number,
     title: {
         project?: string,
@@ -190,7 +192,9 @@ export class TogglApi {
     }
     static responseTemplate = class {
         success: boolean;
-        raw: object;
+        raw: {
+            [index:string]: any
+        };
         constructor(success:boolean=false, raw:object={}){
             this.success = success;
             this.raw = raw;
@@ -206,6 +210,13 @@ export class TogglApi {
             detailed: "/details",
             summary: "/summary"
         }
+    }
+    static delay(ms:number){
+        return new Promise((resolve:Function,reject:Function)=>{
+            Logger.log('Sleeping for ' + ms + ' ms');
+            Utilities.sleep(ms);
+            resolve(true);
+        });
     }
 
     private _getAuthHeaders(){
@@ -237,13 +248,29 @@ export class TogglApi {
             if (startResult.success && startResult.raw['per_page'] && startResult.raw['total_count']){
                 let numPerPage:number = startResult.raw['per_page'];
                 let fetchedNum:number = numPerPage * currPage;
+                let totalCount:number = startResult.raw['total_count'];
                 let resultArr:Array<any> = startResult.raw['data'];
-                if (fetchedNum < startResult.raw['total_count']){
+                let finalResult = new TogglApi.responseTemplate(true);
+                if (fetchedNum < totalCount){
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice
                     while (!done){
-
+                        await TogglApi.delay(1000);
+                        currPage++;
+                        let currResult = await this.getDetailedReport(workspaceId,since,until,currPage);
+                        if (currResult.success && Array.isArray(currResult.raw['data'])){
+                            fetchedNum = numPerPage * currPage;
+                            done = (fetchedNum < totalCount);
+                            // Concat arrays
+                            resultArr = resultArr.concat(currResult.raw['data']);
+                        }
+                        else {
+                            done = true;
+                        }
                     }
+                    // Return result with array modified to include concatenated results from pages
+                    finalResult.raw = resultArr;
+                    return finalResult;
                 }
                 else {
                     done = true;

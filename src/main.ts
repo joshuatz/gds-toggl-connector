@@ -128,6 +128,7 @@ interface fieldMapping {
     type: GoogleAppsScript.Data_Studio.FieldType
     togglMapping?: {
         fields: {
+            [index:string]: Array<string>|undefined,
             TogglDetailedEntry?: Array<string>,
             TogglProjectGroupedEntry?: Array<string>,
             TogglUserGroupedEntry?: Array<string>,
@@ -252,7 +253,7 @@ function addField(fieldsObj:GoogleAppsScript.Data_Studio.Fields,fieldToAdd:field
     }
     chain.setId(fieldToAdd.id);
     chain.setName(fieldToAdd.name);
-    if ('description' in fieldToAdd){
+    if (typeof(fieldToAdd.description)==='string'){
         chain.setDescription(fieldToAdd.description);
     }
     chain.setType(fieldToAdd.type);
@@ -392,7 +393,7 @@ function isAdminUser(){
 }
 
 function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studio.Fields,requestedFieldIds:Array<string>,response:TogglDetailedReportResponse|TogglSummaryReportResponse,responseType:usedTogglResponseTypes,entryType:usedToggleResponseEntriesTypes,requestedGrouping?:"projects"|"clients"|"users"){
-
+    let entryTypeStringIndex:string = entryType.toString();
     let mappedData: Array<DataReturnObjRow> = [];
 
     // Loop over response entries
@@ -428,24 +429,27 @@ function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studi
 
             if (requestedFieldId in myFields && 'togglMapping' in myFields[requestedFieldId]){
                 let mapping = myFields[requestedFieldId].togglMapping;
-                // Look up the individual field mappings
-                if (entryType in mapping.fields){
-                    // Iterate over field keys
-                    let requiredKeysLength = mapping.fields[entryType].length;
-                    let foundVals:Array<any> = [];
-                    for (let x=0; x<mapping.fields[entryType].length; x++){
-                        let val:any = recurseFromString(entry,mapping.fields[entryType][x]);
-                        if (typeof(val)!=='undefined'){
-                            foundVals.push(val);
+                if (mapping){
+                    // Look up the individual field mappings
+                    let fields = mapping.fields[entryTypeStringIndex];
+                    if (fields){
+                        // Iterate over field keys
+                        let requiredKeysLength = fields.length;
+                        let foundVals:Array<any> = [];
+                        for (let x=0; x<fields.length; x++){
+                            let val:any = recurseFromString(entry,fields[x]);
+                            if (typeof(val)!=='undefined'){
+                                foundVals.push(val);
+                            }
                         }
-                    }
-                    if (foundVals.length > 0){
-                        if ('formatter' in mapping){
-                            valueToPass = mapping.formatter.apply(entry,foundVals);
-                        }
-                        else {
-                            // Assume we only want first val
-                            valueToPass = foundVals[0];
+                        if (foundVals.length > 0){
+                            if ('formatter' in mapping && typeof(mapping['formatter'])==='function'){
+                                valueToPass = mapping.formatter.apply(entry,foundVals);
+                            }
+                            else {
+                                // Assume we only want first val
+                                valueToPass = foundVals[0];
+                            }
                         }
                     }
                 }

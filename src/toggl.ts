@@ -61,6 +61,14 @@ interface TogglWeeklyReportRequestParams extends TogglReportRequestParams {
 /**
  * Response Interfaces
  */
+
+ // Wrapper interface
+export interface responseTemplate {
+    success:boolean;
+    raw: {
+        [index:string]: any;
+    };
+}
 export interface TogglStandardReportResponse {
     total_grand: number|null,
     total_billable: number|null,
@@ -192,15 +200,12 @@ export class TogglApi {
         this._authToken = (authToken || '');
         this._userAgent = (userAgent || APP_USER_AGENT);
     }
-    static responseTemplate = class {
-        success: boolean;
-        raw: {
-            [index:string]: any
-        };
-        constructor(success:boolean=false, raw:object={}){
-            this.success = success;
-            this.raw = raw;
+    static getResponseTemplate(success:boolean=false, raw:object={}){
+        let response:responseTemplate = {
+            success: success,
+            raw: raw
         }
+        return response;
     }
     static readonly endpoints = {
         user : {
@@ -238,7 +243,7 @@ export class TogglApi {
         }
         catch (e){
             Logger.log(e);
-            return new TogglApi.responseTemplate(false);
+            return TogglApi.getResponseTemplate(false);
         }
     }
     async getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
@@ -252,7 +257,7 @@ export class TogglApi {
                 let fetchedNum:number = numPerPage * currPage;
                 let totalCount:number = startResult.raw['total_count'];
                 let resultArr:Array<any> = startResult.raw['data'];
-                let finalResult = new TogglApi.responseTemplate(true);
+                let finalResult = TogglApi.getResponseTemplate(true);
                 if (fetchedNum < totalCount){
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice
@@ -286,7 +291,7 @@ export class TogglApi {
         }
         catch (e){
             Logger.log(e);
-            return new TogglApi.responseTemplate(false);
+            throw(e);
         }
     }
     async getDetailedReport(workspaceId:number,since:Date,until:Date,page?:number){
@@ -308,7 +313,7 @@ export class TogglApi {
         }
         catch (e){
             Logger.log(e);
-            return new TogglApi.responseTemplate();
+            throw(e);
         }
     }
     assembleAuthHeader(){
@@ -357,7 +362,7 @@ export class TogglApi {
      * @param response {object} - {success:bool, data: responseJson}
      */
     static parseJsonResponse(response: httpResponse){
-        let parsed = new TogglApi.responseTemplate;
+        let parsed = TogglApi.getResponseTemplate();
         let json: object = {};
         let valid: boolean = this.checkResponseValid(response).valid;
         if (valid){

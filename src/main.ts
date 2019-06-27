@@ -26,7 +26,9 @@ interface FieldObjNameOnly {
  * Note: Fields correspond to names provided by getSchema/getFields
  */
 interface GetDataRequest {
-    "configParams"?: object,
+    "configParams"?: {
+        [index:string]: any
+    },
     "scriptParams"?: {
         "sampleExtraction"?: boolean,
         "lastRefresh"?: string
@@ -336,48 +338,13 @@ function getSchema(request:SchemaRequest) {
  */
 function getData(request:GetDataRequest){
     console.log(JSON.stringify(request));
-    // console.log(request);
-
-    // FLAG - request is missing required info
-    let blocker = false;
 
     // Grab fields off incoming request
     let types = cc.FieldType;
     let requestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
     let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(requestedFieldIds);
 
-    // Grab date stuff off incoming request
-    let lastRefreshedTime:Date;
-    if (typeof(request.scriptParams)==='object' && typeof(request.scriptParams.lastRefresh)==='string'){
-        lastRefreshedTime = new Date(request.scriptParams.lastRefresh);
-    }
-    else {
-        lastRefreshedTime = new Date(new Date().getTime() - (12*60*60*1000));
-    }
-    let dateRangeStart:Date = new Date(request.dateRange.startDate);
-    let dateRangeEnd:Date = new Date(request.dateRange.endDate);
-
-    // Certain things in what is requested can change how route used to retrieve data...
-    let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
-    let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
-    let clientDimensionRequired:boolean = (requestedFieldIds.indexOf('clientId')!==-1||requestedFieldIds.indexOf('clientName')!==-1);
-
-    // Extract config configParams
-    if (request.configParams){
-        // @todo - check for valid params, block if not found, and fill workspace id
-    }
-
-    // Get ready to hold response from API before conversion
-    let apiResponse = new TogglApi.responseTemplate();
-
-    if (dateDimensionRequired){
-        // The only request type that a date dimension is the detailed report
-        // apiResponse = togglApiInst.getDetailsReportAllPages()
-    }
-    else {
-        //
-    }
-
+    // What the final result should look like
     let returnData: GetDataReturnObj = {
         "cachedData" : false,
         "schema" : requestedFields.build(),
@@ -394,10 +361,84 @@ function getData(request:GetDataRequest){
             }
         ]
     }
+
+    // FLAG - request is missing required info
+    let blocker:boolean = false;
+    let blockerReason:string = '';
+
+    // Grab date stuff off incoming request
+    let lastRefreshedTime:Date;
+    if (typeof(request.scriptParams)==='object' && typeof(request.scriptParams.lastRefresh)==='string'){
+        lastRefreshedTime = new Date(request.scriptParams.lastRefresh);
+    }
+    else {
+        lastRefreshedTime = new Date(new Date().getTime() - (12*60*60*1000));
+    }
+    let dateRangeStart:Date = new Date(request.dateRange.startDate);
+    let dateRangeEnd:Date = new Date(request.dateRange.endDate);
+
+    // Certain things in what is requested can change how route used to retrieve data...
+    let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
+    let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
+    let clientDimensionRequired:boolean = (requestedFieldIds.indexOf('clientId')!==-1||requestedFieldIds.indexOf('clientName')!==-1);
+    let workspaceId:number = -1;
+
+    // Extract config configParams
+    if (request.configParams){
+
+        if (typeof(request.configParams['workspaceId'])!=='undefined'){
+            try {
+                workspaceId = parseInt(request.configParams['workspaceId'],10);
+            }
+            catch (e){
+                blocker = true;
+                blockerReason = 'Workspace ID is required for all requests!';
+            }
+        }
+        else {
+            blocker = true;
+            blockerReason = 'Workspace ID is required for all requests!';
+        }
+    }
+
+    // Early return if anything is missing
+    if (blocker){
+        cc.newUserError()
+            .setDebugText(blockerReason)
+            .setText(blockerReason)
+            .throwException();
+        return false;
+    }
+
+    // Get ready to hold response from API before conversion
+    let apiResponse = TogglApi.getResponseTemplate();
+
+    if (dateDimensionRequired && !blocker){
+        // The only request type that a date dimension is the detailed report
+        togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd).then((res)=>{
+            if (res.success){
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
+            }
+            else {
+                cc.newUserError()
+                    .setDebugText('Something wrong with result from API')
+                    .setText('API responded, but something went wrong')
+                    .throwException();
+            }
+        }).catch((err)=>{
+            cc.newUserError()
+                .setDebugText(err.toString())
+                .setText('Something went wrong fetching from Toggl')
+                .throwException();
+            return false;
+        });
+    }
+    else {
+        //
+    }
+
     // console.log(returnData);
     // console.log(JSON.stringify(requestedFields.build(),null,4));
-    
-
     
     // @TODO
     return returnData;
@@ -411,10 +452,10 @@ function isAdminUser(){
     return false;
 }
 
-function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studio.Fields,requestedFieldIds:Array<string>,response:TogglDetailedReportResponse|TogglSummaryReportResponse,responseType:usedTogglResponseTypes,entryType:usedToggleResponseEntriesTypes,requestedGrouping?:"projects"|"clients"|"users"){
+function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studio.Fields,requestedFieldIds:Array<string>,response:{[index:string]:any},responseType:usedTogglResponseTypes,entryType:usedToggleResponseEntriesTypes,requestedGrouping?:"projects"|"clients"|"users"){
     let entryTypeStringIndex:string = entryType.toString();
     let mappedData: Array<DataReturnObjRow> = [];
-
+    response.data = Array.isArray(response.data) ? response.data : [];
     // Loop over response entries
     for (let x=0; x<response.data.length; x++){
         let entry = response.data[x];

@@ -1,3 +1,5 @@
+import { fieldMapping } from "./main";
+
 export function leftPad(input:string,padWith:string,length:number){
     let output:string = input;
     while (output.length < length){
@@ -55,7 +57,7 @@ export class Converters {
         try {
             let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : date;
             let dateParts = Converters.getDateParts(dateToFormat);
-            let togglFormattedDate:string = dateParts.year + dateParts.monthPadded + dateParts.dayPadded;
+            let togglFormattedDate:string = [dateParts.year,dateParts.monthPadded,dateParts.dayPadded].join('-');
             return togglFormattedDate;
         }
         catch (e){
@@ -107,4 +109,48 @@ export class Converters {
             return '';
         }
     }
+
+    static togglDurationToGdsDuration(togglDurationMs:number){
+        return (togglDurationMs/1000).toString();
+    }
+}
+
+/**
+ * Logging
+ */
+export class myConsole {
+    static log(thing:any){
+        if (typeof(thing)==='object'){
+            console.log({
+                message: JSON.stringify(thing)
+            });
+        }
+        else if (typeof(thing)==='string'){
+            console.log({
+                message: thing
+            });
+        }
+        else {
+            if (thing && typeof(thing.toString)==='function'){
+                console.log({
+                    message: thing.toString()
+                });
+            }
+            else {
+                console.log(thing);
+            }
+        }
+    }
+}
+
+/**
+ * Polyfill setTimeout
+ */
+export function setTimeout(cb:Function,ms:number){
+    Utilities.sleep(ms);
+    cb();
+}
+
+export function aggregateValues(values:any[],mappings:fieldMapping[]){
+    
 }

@@ -1,7 +1,6 @@
 import 'google-apps-script';
 import './helpers';
-import { Converters } from './helpers';
-import 'es6-promise';
+import { Converters, myConsole } from './helpers';
 
 /**
  * @author Joshua Tzucker
@@ -188,8 +187,6 @@ export enum usedToggleResponseEntriesTypes {
     TogglSummaryEntry
 }
 
-
-
 export class TogglApi {
     private _authToken: string;
     private _userAgent: string;
@@ -247,23 +244,27 @@ export class TogglApi {
         }
     }
     async getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
+        myConsole.log('starting getDetailsReportAllPages');
         let currPage = (startPage || 1);
         let done = false;
         try {
             let startResult = await this.getDetailedReport(workspaceId,since,until,currPage);
+            //myConsole.log(startResult);
             // Need to check for pagination...
             if (startResult.success && startResult.raw['per_page'] && startResult.raw['total_count']){
                 let numPerPage:number = startResult.raw['per_page'];
                 let fetchedNum:number = numPerPage * currPage;
                 let totalCount:number = startResult.raw['total_count'];
                 let resultArr:Array<any> = startResult.raw['data'];
-                let finalResult = TogglApi.getResponseTemplate(true);
                 if (fetchedNum < totalCount){
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice
+                    let finalResult = TogglApi.getResponseTemplate(true);
+                    myConsole.log('getDetailsReportAllPages - starting pagination');
                     while (!done){
                         await TogglApi.delay(1000);
                         currPage++;
+                        myConsole.log('Current Page = ' + currPage);
                         let currResult = await this.getDetailedReport(workspaceId,since,until,currPage);
                         if (currResult.success && Array.isArray(currResult.raw['data'])){
                             fetchedNum = numPerPage * currPage;
@@ -281,16 +282,18 @@ export class TogglApi {
                 }
                 else {
                     done = true;
+                    myConsole.log({'message':'Detailed Report - only single page of results'});
                     return startResult;
                 }
             }
             else {
                 done = true;
+                myConsole.log('API did not return paging results');
                 return startResult;
             }
         }
         catch (e){
-            Logger.log(e);
+            myConsole.log(e);
             throw(e);
         }
     }
@@ -309,10 +312,11 @@ export class TogglApi {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
             // @TODO refactor to use typed results (:TogglDetailedReportResponse)
             let result = TogglApi.parseJsonResponse(apiResponse);
+            //myConsole.log(result);
             return result;
         }
         catch (e){
-            Logger.log(e);
+            myConsole.log(e);
             throw(e);
         }
     }
@@ -387,7 +391,7 @@ export class TogglApi {
         let index = 0;
         for (let key in requestParams){
             let val = requestParams[key];
-            let stringifiedVal:string;
+            let stringifiedVal:string = '';
             // Date
             if (typeof(val.getTime)==='function'){
                 stringifiedVal = Converters.formatDateForTogglApi(val);
@@ -416,7 +420,7 @@ export class TogglApi {
             if (index > 0){
                 finalQueryString += '&';
             }
-            finalQueryString += key + '=' + encodeURI(val);
+            finalQueryString += key + '=' + encodeURI(stringifiedVal);
             index++;
         }
         if (urlToAppendTo){

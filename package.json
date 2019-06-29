@@ -12,7 +12,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "prep-ts": "node prep-ts.js",
-        "build": "npm run prep-ts && tsc"
+        "run-tsc": "tsc",
+        "build": "npm run prep-ts && npm run run-tsc && node add-polyfills.js"
     },
     "author": "Joshua Tzucker",
     "dependencies": {

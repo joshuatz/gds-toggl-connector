@@ -221,13 +221,6 @@ export class TogglApi {
             summary: "/summary"
         }
     }
-    static delay(ms:number){
-        return new Promise((resolve:Function,reject:Function)=>{
-            Logger.log('Sleeping for ' + ms + ' ms');
-            Utilities.sleep(ms);
-            resolve(true);
-        });
-    }
     static delaySync(ms:number){
         // This should be blocking/sync by default
         Utilities.sleep(ms);

@@ -175,6 +175,7 @@ export class myConsole {
 
 /**
  * Polyfill setTimeout
+ * !!! - DO NOT REMOVE - GLOBAL FUNC - !!!
  */
 export function setTimeout(cb:Function,ms:number){
     Utilities.sleep(ms);

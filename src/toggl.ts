@@ -47,7 +47,9 @@ interface TogglDetailedReportRequestParams extends TogglReportRequestParams {
 interface TogglSummaryReportRequestParams extends TogglReportRequestParams {
     order_fields?: "title"|"duration"|"amount"
     grouping?: "projects"|"clients"|"users"
-    subgrouping?: "time_entries"|"tasks"|"projects"|"users"
+    subgrouping?: "time_entries"|"tasks"|"projects"|"users",
+    subgrouping_ids?: boolean,
+    grouped_time_entry_ids?: boolean
 }
 
 // https://github.com/toggl/toggl_api_docs/blob/master/reports/weekly.md
@@ -309,19 +311,49 @@ export class TogglApi {
             until: until,
             page: currPage
         }
-        let url: string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
+        let url:string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
         url = TogglApi.requestParamsToQueryString(requestParams,url);
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
             // @TODO refactor to use typed results (:TogglDetailedReportResponse)
             let result = TogglApi.parseJsonResponse(apiResponse);
-            //myConsole.log(result);
             return result;
         }
         catch (e){
-            myConsole.log(e);
+            myConsole.error(e);
             throw(e);
         }
+    }
+    getSummaryReport(workspaceId:number,since:Date,until:Date,grouping:'projects'|'clients'|'users'='projects',subgrouping:'time_entries'|'tasks'|'projects'|'users'='time_entries'){
+        let requestParams: TogglSummaryReportRequestParams = {
+            workspace_id: workspaceId,
+            user_agent: this._userAgent,
+            since: since,
+            until: until,
+            grouping: grouping,
+            subgrouping: subgrouping
+        }
+        // Check for valid combinations - subgrouping cannot be same as grouping
+        if (grouping===subgrouping){
+            cc.newDebugError()
+                .setText('Invalid combination of grouping and subgrouping in getSummaryReport request')
+                .throwException();
+            return TogglApi.getResponseTemplate(false);
+        }
+        let url:string = this._reportApiBase + TogglApi.endpoints.reports.summary;
+        url = TogglApi.requestParamsToQueryString(requestParams,url);
+        try {
+            let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
+            let result = TogglApi.parseJsonResponse(apiResponse);
+            return result;
+        }
+        catch (e){
+            myConsole.error(e);
+            throw(e);
+        }
+    }
+    getWeeklyReport(){
+        // @TODO
     }
     assembleAuthHeader(){
         return 'Basic ' + Utilities.base64Encode(this._authToken + ':api_token');

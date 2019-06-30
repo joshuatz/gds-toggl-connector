@@ -1,7 +1,7 @@
 import 'google-apps-script';
 import {getUserApiKey} from './auth';
 import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse,TogglDetailedEntry, TogglStandardReportResponse,TogglSummaryEntry, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
-import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTimeRange, forceDateToStartOfDay, forceDateToEndOfDay } from './helpers';
+import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTimeRange, forceDateToStartOfDay, forceDateToEndOfDay, Exceptions } from './helpers';
 
 /**
  * @author Joshua Tzucker
@@ -424,7 +424,6 @@ function getData(request:GetDataRequest){
     myConsole.log(request);
 
     // Grab fields off incoming request
-    let types = cc.FieldType;
     let requestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
     let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(requestedFieldIds);
 
@@ -497,10 +496,10 @@ function getData(request:GetDataRequest){
     // Get ready to hold response from API before conversion
     let apiResponse = TogglApi.getResponseTemplate();
 
-    if (dateDimensionRequired && !blocker){
-        myConsole.log('dateDimensionRequired');
-        // The only request type that a date dimension is the detailed report
-        try {
+    try {
+        if (dateDimensionRequired){
+            myConsole.log('dateDimensionRequired');
+            // The only request type that a date dimension is the detailed report
             let res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd);
             myConsole.log(res);
             if (res.success){
@@ -509,22 +508,33 @@ function getData(request:GetDataRequest){
                 return returnData;
             }
             else {
-                cc.newUserError()
-                    .setDebugText('Something wrong with result from API')
-                    .setText('API responded, but something went wrong')
-                    .throwException();
+                return Exceptions.throwGenericApiErr();
             }
         }
-        catch (err){
+        else if (projectDimensionRequired){
+            // If dateDimensionRequired is false, and uses has requested project details, we can query the summary endpoint and group by project
+            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,'projects');
+            if (res.success){
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,'projects');
+                return returnData;
+            }
+            else {
+                return Exceptions.throwGenericApiErr();
+            }
+        }
+        else {
             cc.newUserError()
-                .setDebugText(err.toString())
-                .setText('Something went wrong fetching from Toggl')
+                .setDebugText('No API call was made, could not determine endpoint based on dimensions requested')
+                .setText('Invalid combination of dimensions')
                 .throwException();
             return false;
         }
     }
-    else {
-        myConsole.log({'message':'REPLACEME'});
+    catch (err){
+        cc.newUserError()
+            .setDebugText(err.toString())
+            .setText('Something went wrong fetching from Toggl')
+            .throwException();
         return false;
     }
 
@@ -583,7 +593,7 @@ function mapTogglResponseToGdsFields(
 
         // lets do some pre-processing
         if (responseType === usedTogglResponseTypes.TogglDetailedReportResponse){
-
+            // No special pre-processing required
         }
         else if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
             // Summary reports can be grouped - and the ID field in response changes to match
@@ -596,6 +606,9 @@ function mapTogglResponseToGdsFields(
             else if (requestedGrouping==='users'){
                 entry['uid'] = entry.id;
             }
+        }
+        else if (responseType === usedTogglResponseTypes.TogglWeeklyReportResponse){
+            // @TODO ?
         }
 
         // Iterate over requested fields [COLUMNS]

@@ -149,27 +149,35 @@ export class Converters {
  * Logging
  */
 export class myConsole {
-    static log(thing:any){
+    static formatThingForConsole(thing:any){
+        let result:any = thing;
         if (typeof(thing)==='object'){
-            console.log({
+            result = {
                 message: JSON.stringify(thing)
-            });
+            };
         }
         else if (typeof(thing)==='string'){
-            console.log({
+            result = {
                 message: thing
-            });
+            };
         }
         else {
             if (thing && typeof(thing.toString)==='function'){
-                console.log({
+                result = {
                     message: thing.toString()
-                });
+                };
             }
             else {
-                console.log(thing);
+                result = thing;
             }
         }
+        return result;
+    }
+    static log(thing:any){
+        console.log(myConsole.formatThingForConsole(thing))
+    }
+    static error(thing:any){
+        console.error(myConsole.formatThingForConsole(thing));
     }
 }
 
@@ -199,4 +207,14 @@ export function forceDateToEndOfDay(input:Date){
     let result:Date = new Date(input.getTime());
     result.setUTCHours(23,59,59,999);
     return result;
+}
+
+export class Exceptions {
+    static throwGenericApiErr(){
+        cc.newUserError()
+            .setDebugText('Something wrong with result from API')
+            .setText('API responded, but something went wrong')
+            .throwException();
+        return false;
+    }
 }

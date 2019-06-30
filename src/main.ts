@@ -7,7 +7,6 @@ import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTi
  * @author Joshua Tzucker
  * @file main.ts
  * Note: @override is used to denote function that is required and expected by connector implementation
- * REMINDER TO SELF: Use console.log() instead of Logger.log(), if you want logs to show up in StackDriver!
  * REMINDER: DO NOT USE 'GoogleAppsScript' in a way that will force it to show up in generated JS. Should only be used as interface; does not actually exist as obj in GAS online.
  *      - That is why I have called some enums at the start and stored as var, so they can be referenced instead
  * @TODO - How to deal with currency?
@@ -15,6 +14,7 @@ import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTi
  *      - I have to tell GDS the currency in advance, so if I wanted it to be dynamic based on Toggl setting, I would have to make double API calls...
  *      - Messy but reliable option: make a field for every single currency Toggl might return, and then map based on response
  * @TODO - Implement caching
+ * @TODO - handle "alltime" query?
  */
 
  /**
@@ -181,6 +181,7 @@ let myFields: {[index:string]:fieldMapping} = {
         dimension: true,
         id: 'startedAtHour',
         name: 'Started At - Hour',
+        description: 'The hour / time at which the time entry was started at',
         togglMapping: {
             fields: {
                 TogglDetailedEntry: ['start']
@@ -192,6 +193,23 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'DIMENSION',
             semanticType: fieldTypeEnum.YEAR_MONTH_DAY_HOUR
+        }
+    },
+    // Main Task Entry stuff (title, id, etc.)
+    entryDescription: {
+        dimension: true,
+        id: 'entryDescription',
+        name: 'Entry Description / Title',
+        description: 'Entry Description / Title. Not required by Toggl',
+        semantics: {
+            conceptType: 'DIMENSION',
+            semanticType: fieldTypeEnum.TEXT
+        },
+        togglMapping: {
+            fields: {
+                TogglDetailedEntry: ['description']
+                // @TODO map time_entry from summary entry report? Or just keep requiring that it use the detailed endpoint? Would need to "flatten" summary report to grab...
+            }
         }
     },
     // Projects
@@ -366,25 +384,10 @@ function getFields(){
     let types = cc.FieldType;
     let aggregations = cc.AggregationType;
 
-    // Default date/time dimension
-    addField(fields,myFields.day);
-    addField(fields,myFields.startedAtHour);
-
-    // Projects
-    addField(fields,myFields.projectId);
-    addField(fields,myFields.projectName);
-
-    // Clients
-    addField(fields,myFields.clientId);
-    addField(fields,myFields.clientName);
-
-    // Billing Info
-    addField(fields,myFields.billableMoneyTotal);
-    addField(fields,myFields.billableTimeTotal);
-    addField(fields,myFields.isBillable);
-
-    // Time
-    addField(fields,myFields.time);
+    let fieldKeys = Object.keys(myFields);
+    for (let x=0; x < fieldKeys.length; x++){
+        addField(fields,myFields[fieldKeys[x]]);
+    }
 
     return fields;
 }
@@ -468,14 +471,24 @@ function getData(request:GetDataRequest){
     let dateRangeEnd:Date = forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
 
     // Certain things in what is requested can change how route used to retrieve data...
+    let canUseDetailedReport = true;
+    let canUseWeeklyProjectReport = true;
+    let canUseWeeklyUserReport = true;
+    let canUseSummaryReport = true;
+    for (let x=0; x<requestedFieldIds.length; x++){
+        let fieldId = requestedFieldIds[x];
+        canUseDetailedReport = !canUseDetailedReport ? canUseDetailedReport : getIsFieldInResponseEntryType(fieldId,'TogglDetailedEntry');
+        canUseWeeklyProjectReport = !canUseWeeklyProjectReport ? canUseWeeklyProjectReport : getIsFieldInResponseEntryType(fieldId,'TogglWeeklyProjectGroupedEntry');
+        canUseWeeklyUserReport = !canUseWeeklyUserReport ? canUseWeeklyUserReport : getIsFieldInResponseEntryType(fieldId,'TogglWeeklyUserGroupedEntry');
+        canUseSummaryReport = !canUseSummaryReport ? canUseSummaryReport :  getIsFieldInResponseEntryType(fieldId,'TogglSummaryEntry');
+    }
+
     let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
     let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
-    let clientDimensionRequired:boolean = (requestedFieldIds.indexOf('clientId')!==-1||requestedFieldIds.indexOf('clientName')!==-1);
     let workspaceId:number = -1;
 
     // Extract config configParams
     if (request.configParams){
-
         if (typeof(request.configParams['workspaceId'])!=='undefined'){
             try {
                 workspaceId = parseInt(request.configParams['workspaceId'],10);
@@ -501,7 +514,22 @@ function getData(request:GetDataRequest){
     }
 
     try {
-        if (dateDimensionRequired){
+        if (!dateDimensionRequired && canUseSummaryReport){
+            // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
+            let grouping:'projects'|'clients' = (projectDimensionRequired ? 'projects' : 'clients');
+            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping);
+            if (res.success){
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
+                return returnData;
+            }
+            else {
+                return Exceptions.throwGenericApiErr();
+            }
+        }
+        else if (!dateDimensionRequired && (canUseWeeklyProjectReport || canUseWeeklyUserReport)){
+            // @TODO
+        }
+        else if (dateDimensionRequired || canUseDetailedReport){
             myConsole.log('dateDimensionRequired');
             // The only request type that a date dimension is the detailed report
             let res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd);
@@ -509,18 +537,6 @@ function getData(request:GetDataRequest){
             if (res.success){
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
                 myConsole.log(returnData);
-                return returnData;
-            }
-            else {
-                return Exceptions.throwGenericApiErr();
-            }
-        }
-        else if (projectDimensionRequired || clientDimensionRequired){
-            // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
-            let grouping:'projects'|'clients' = (projectDimensionRequired ? 'projects' : 'clients');
-            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping);
-            if (res.success){
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
                 return returnData;
             }
             else {
@@ -722,4 +738,12 @@ function testDateString(){
         }
     }
     myConsole.log(test);
+}
+
+function getIsFieldInResponseEntryType(fieldId:string,entryTypeStringIndex:string){
+    let fieldMapping = myFields[fieldId].togglMapping;
+    if (fieldMapping){
+        return Array.isArray(fieldMapping.fields[entryTypeStringIndex]);
+    }
+    return false;
 }

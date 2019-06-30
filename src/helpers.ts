@@ -31,7 +31,7 @@ export class Converters {
     }
     static getDateParts(dateToFormat:Date){
         let year = dateToFormat.getFullYear().toString();
-        let monthInt:number  = dateToFormat.getMonth();
+        let monthInt:number = dateToFormat.getMonth() + 1;
         let month = monthInt.toString();
         let day = (dateToFormat.getDate()).toString();
         let hours = dateToFormat.getHours();
@@ -66,7 +66,8 @@ export class Converters {
     }
 
     // https://stackoverflow.com/a/6117889
-    static getWeekNumber(d:Date){
+    static getWeekNumber(input:Date){
+        let d = new Date(input.getTime());
         let dayNum = d.getUTCDay() || 7;
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
         let yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
@@ -76,7 +77,7 @@ export class Converters {
     static formatDateForGds(date:Date|string,gdsDateType:GoogleAppsScript.Data_Studio.FieldType){
         let fieldTypes = DataStudioApp.createCommunityConnector().FieldType;
         try {
-            let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : date;
+            let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : new Date(date.getTime());
             let dateParts = Converters.getDateParts(dateToFormat);
             let dateString:string = '';
             if (gdsDateType === fieldTypes.YEAR){
@@ -112,6 +113,21 @@ export class Converters {
 
     static togglDurationToGdsDuration(togglDurationMs:number){
         return (togglDurationMs/1000).toString();
+    }
+
+    static gdsDateRangeDateToDay(gdsDashedDate:string){
+        // GDS date range start & end are in format "2019-06-28"
+        let pattern:RegExp = /(\d{4})-(\d{2})-(\d{2})/;
+        let match:RegExpMatchArray|null = pattern.exec(gdsDashedDate);
+        if (match){
+            let year:number = parseInt(match[1],10);
+            let month:number = parseInt(match[2],10)-1;
+            let day:number = parseInt(match[3],10);
+            return (new Date(year,month,day));
+        }
+        else {
+            return new Date(gdsDashedDate);
+        }   
     }
 }
 
@@ -153,4 +169,19 @@ export function setTimeout(cb:Function,ms:number){
 
 export function aggregateValues(values:any[],mappings:fieldMapping[]){
     
+}
+
+export function getIsDateInDateTimeRange(dateTimeToCheck:Date,startDateTime:Date,endDateTime:Date){
+    return dateTimeToCheck >= startDateTime && dateTimeToCheck <= endDateTime;
+}
+
+export function forceDateToStartOfDay(input:Date){
+    let result:Date = new Date(input.getTime());
+    result.setUTCHours(0,0,0,0);
+    return result;
+}
+export function forceDateToEndOfDay(input:Date){
+    let result:Date = new Date(input.getTime());
+    result.setUTCHours(23,59,59,999);
+    return result;
 }

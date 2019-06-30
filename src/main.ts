@@ -1,7 +1,7 @@
 import 'google-apps-script';
 import {getUserApiKey} from './auth';
 import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse,TogglDetailedEntry, TogglStandardReportResponse,TogglSummaryEntry, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
-import { Converters, recurseFromString, myConsole, setTimeout } from './helpers';
+import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTimeRange, forceDateToStartOfDay, forceDateToEndOfDay } from './helpers';
 
 /**
  * @author Joshua Tzucker
@@ -294,7 +294,7 @@ let myFields: {[index:string]:fieldMapping} = {
 
 /**
  * Add a custom field to a connector
- * @param fieldsObj - an existing group of fields, generated through connector.getFields();
+ * @param fieldsObj  - an existing group of fields, generated through connector.getFields();
  * @param fieldToAdd - New field to add to connector, following internal syntax
  */
 function addField(fieldsObj:GoogleAppsScript.Data_Studio.Fields,fieldToAdd:fieldMapping){
@@ -429,8 +429,14 @@ function getData(request:GetDataRequest){
     else {
         lastRefreshedTime = new Date(new Date().getTime() - (12*60*60*1000));
     }
-    let dateRangeStart:Date = new Date(request.dateRange.startDate);
-    let dateRangeEnd:Date = new Date(request.dateRange.endDate);
+    let dateRangeStart:Date = forceDateToStartOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.startDate));
+    let dateRangeEnd:Date = forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
+    // myConsole.log({
+    //     dateRangeStartString: request.dateRange.startDate,
+    //     dateRangeStart: dateRangeStart,
+    //     dateRangeEndString: request.dateRange.endDate,
+    //     dateRangeEnd: dateRangeEnd
+    // });
 
     // Certain things in what is requested can change how route used to retrieve data...
     let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
@@ -474,7 +480,7 @@ function getData(request:GetDataRequest){
         togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd).then((res)=>{
             myConsole.log(res);
             if (res.success){
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
                 myConsole.log(returnData);
                 return returnData;
             }
@@ -523,15 +529,28 @@ function isAdminUser(){
  * @param entryType 
  * @param requestedGrouping 
  */
-function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studio.Fields|null,requestedFieldIds:Array<string>,response:{[index:string]:any},responseType:usedTogglResponseTypes,entryType:usedToggleResponseEntriesTypes,requestedGrouping?:"projects"|"clients"|"users"){
-
+function mapTogglResponseToGdsFields(
+    requestedFields:GoogleAppsScript.Data_Studio.Fields|null,
+    requestedFieldIds:Array<string>,
+    requestedStart:Date,
+    requestedEnd:Date,
+    response:{[index:string]:any},
+    responseType:usedTogglResponseTypes,
+    entryType:usedToggleResponseEntriesTypes,
+    requestedGrouping?:"projects"|"clients"|"users") {
+        
     // Need to get literal string key from enum
     let entryTypeStringIndex:string = usedToggleResponseEntriesTypes[entryType];
     let mappedData: Array<DataReturnObjRow> = [];
     response.data = Array.isArray(response.data) ? response.data : [];
 
+    let suppressedRowCount:number = 0;
+
     // Loop over response entries - [ROWS]
     for (let x=0; x<response.data.length; x++){
+        // Flag - suppress row being passed to GDS
+        let suppressRow:boolean = false;
+
         let entry = response.data[x];
         let row: DataReturnObjRow = {
             values: []
@@ -556,57 +575,70 @@ function mapTogglResponseToGdsFields(requestedFields:GoogleAppsScript.Data_Studi
 
         // Iterate over requested fields [COLUMNS]
         for (let x=0; x<requestedFieldIds.length; x++){
-            let requestedFieldId = requestedFieldIds[x];
+            let fieldMapping = myFields[requestedFieldIds[x]]; 
 
             // Make sure to pass *something* to GDS for every requested field!
             let valueToPass:any = null;
+            if (fieldMapping){
+                valueToPass = extractValueFromEntryWithMapping(entry,fieldMapping,entryTypeStringIndex);
+            }
 
-            if (requestedFieldId in myFields && 'togglMapping' in myFields[requestedFieldId]){
-                let mapping = myFields[requestedFieldId].togglMapping;
-                if (mapping){
-                    // Look up the individual field mappings
-                    // myConsole.log(entryTypeStringIndex);
-                    let fields = mapping.fields[entryTypeStringIndex];
-                    if (fields){
-                        // Iterate over field keys
-                        let foundVals:Array<any> = [];
-                        for (let x=0; x<fields.length; x++){
-                            let val:any = recurseFromString(entry,fields[x]);
-                            if (typeof(val)!=='undefined'){
-                                foundVals.push(val);
+            if (fieldMapping.id ==='day' && fieldMapping.semantics.conceptType==='DIMENSION'){
+                // !!! - Special - !!!
+                // Sometimes Toggl will return entries that overlap days. This can lead to the dreaded "number of columns returned don't match requested" error from GDS if blinding returning a date that GDS did not actually request.
+                // let augmentedMapping = Object.assign({},fieldMapping);
+                
+                if (typeof(fieldMapping.togglMapping)==='object'){
+                    // Take care to make copy so not modifying reference
+                    let augmentedMapping:fieldMapping = {
+                        id: fieldMapping.id,
+                        dimension: true,
+                        name: fieldMapping.name,
+                        semantics: fieldMapping.semantics,
+                        togglMapping: {
+                            fields: fieldMapping.togglMapping.fields,
+                            formatter: (date:string)=>{
+                                // Convert Toggl date to true Date Obj
+                                // Note - Toggl includes Timezone with date ("start":"2019-06-28T18:54:50-07:00"), so remove it to make compatible with checking date range (with uses GMT)
+                                let convertedDate:Date = new Date(date.replace(/(\d{4}-\d{2}-\d{2}T[^-]+-).*/,'$100:00'));
+                                // let convertedDate:Date = new Date(date);
+                                return convertedDate;
                             }
                         }
-                        if (foundVals.length > 0){
-                            if ('formatter' in mapping && typeof(mapping['formatter'])==='function'){
-                                valueToPass = mapping.formatter.apply(entry,foundVals);
-                            }
-                            else {
-                                // Assume we only want first val
-                                valueToPass = foundVals[0];
-                            }
-                        }
-                        else {
-                            Logger.log('No required fields were found for mapping of "' + requestedFieldId + '"');
+                    }
+                    // augmentedMapping.togglMapping.formatter = (date:string)=>{
+                    //     // Convert Toggl date to true Date Obj
+                    //     // Note - Toggl includes Timezone with date ("start":"2019-06-28T18:54:50-07:00"), so remove it to make compatible with checking date range (with uses GMT)
+                    //     let convertedDate:Date = new Date(date.replace(/(\d{4}-\d{2}-\d{2}T[^-]+-).*/,'$100:00'));
+                    //     // let convertedDate:Date = new Date(date);
+                    //     return convertedDate;
+                    // }
+                    let fieldDate:Date = extractValueFromEntryWithMapping(entry,augmentedMapping,entryTypeStringIndex);
+                    if (!getIsDateInDateTimeRange(fieldDate,requestedStart,requestedEnd)){
+                        suppressRow = true;
+                        suppressedRowCount++;
+                        if (suppressedRowCount <= 1){
+                            // myConsole.log('Local ==> suppressed date! - Date = ' + fieldDate.toString() + ' || requestedStart  = '  + requestedStart.toString() + ' || requestedEnd = ' + requestedEnd.toString());
+                            // myConsole.log('GMT ==> suppressed date! - Date = ' + fieldDate.toUTCString() + ' || requestedStart  = '  + requestedStart.toUTCString() + ' || requestedEnd = ' + requestedEnd.toUTCString());
                         }
                     }
                 }
             }
-            else {
-                Logger.log('Requested field "' + requestedFieldId + '" was not found in stored mapping config');
-            }
-
-            // No matter what, push the value to the return row
-            valueToPass = typeof(valueToPass)!=='undefined' ? valueToPass : null;
             row.values.push(valueToPass);
         }
         // Push the entire entry row to results
-        mappedData.push(row);
+        if (!suppressRow){
+            mappedData.push(row);
+        }
     }
 
     // Need to iterate over data *again* and check for rows that need to be aggregated. E.g., if there are two rows with same day dimension, they need to be combined
     for (let x=0; x<mappedData.length; x++){
 
     }
+
+    // Since Toggl might not return data for *every* date that GDS requested, should go back in and backfill...
+    // @TODO
 
     return mappedData;
 }
@@ -628,3 +660,64 @@ function testPromises(){
     });
 }
 
+/**
+ * Extracts the value from a Toggl API response entry, and converts it based on the destination GDS column
+ * @param entry {object} - An entry off a Toggl API response
+ * @param fieldMapping {fieldMapping} - My stored mapping of fields. Should contain semantics
+ * @param entryTypeStringIndex {string} - Toggl entry type enum, converted to string
+ * @return {null|any} - always returns a value, with null being the placeholder if no mapping was found. GDS always expects a value in column
+ */
+function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMapping:fieldMapping,entryTypeStringIndex:string){
+    let extractedValue:any = null;
+    let togglMapping = fieldMapping.togglMapping;
+    if (togglMapping){
+        // Look up the individual field mappings
+        // myConsole.log(entryTypeStringIndex);
+        let fields = togglMapping.fields[entryTypeStringIndex];
+        if (fields){
+            // Iterate over field keys
+            let foundVals:Array<any> = [];
+            for (let x=0; x<fields.length; x++){
+                let val:any = recurseFromString(entry,fields[x]);
+                if (typeof(val)!=='undefined'){
+                    foundVals.push(val);
+                }
+            }
+            if (foundVals.length > 0){
+                if ('formatter' in togglMapping && typeof(togglMapping['formatter'])==='function'){
+                    extractedValue = togglMapping.formatter.apply(entry,foundVals);
+                }
+                else {
+                    // Assume we only want first val
+                    extractedValue = foundVals[0];
+                }
+            }
+            else {
+                Logger.log('No required fields were found for mapping of "' + fieldMapping.id + '"');
+            }
+        }
+    }
+    extractedValue = typeof(extractedValue)!=='undefined' ? extractedValue : null;
+    return extractedValue;
+}
+
+function testDateString(){
+    let startString = '2019-06-28';
+    let startDate:Date = new Date(startString);
+    let forcedEnd:Date = forceDateToEndOfDay(startDate);
+    let forcedStart:Date = forceDateToStartOfDay(startDate);
+    let test:any = {
+        input: startString,
+        toString: startDate.toString(),
+        toUTCString: startDate.toUTCString(),
+        forceDateToStartOfDay: {
+            toString: forcedStart.toString(),
+            toUTCString: forcedStart.toUTCString()
+        },
+        forceDateToEndOfDay: {
+            toString: forcedEnd.toString(),
+            toUTCString: forcedEnd.toUTCString()
+        }
+    }
+    myConsole.log(test);
+}

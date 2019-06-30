@@ -249,6 +249,7 @@ export class TogglApi {
         }
     }
     getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
+        // @TODO limit number of pages requested? Return userError if exceeded?
         myConsole.log('starting getDetailsReportAllPages');
         let currPage = (startPage || 1);
         let done = false;

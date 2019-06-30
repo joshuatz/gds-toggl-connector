@@ -1,5 +1,10 @@
 import { fieldMapping } from "./main";
 
+/**
+ * @author Joshua Tzucker
+ * @file helpers.ts
+ */
+
 export function leftPad(input:string,padWith:string,length:number){
     let output:string = input;
     while (output.length < length){

@@ -1,14 +1,20 @@
 import 'google-apps-script';
 import {getUserApiKey} from './auth';
-import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse,TogglDetailedEntry, TogglStandardReportResponse,TogglSummaryEntry, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
+import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse,TogglDetailedEntry, TogglStandardReportResponse,TogglSummaryEntry, usedTogglResponseTypes, usedToggleResponseEntriesTypes, responseTemplate } from './toggl';
 import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTimeRange, forceDateToStartOfDay, forceDateToEndOfDay, Exceptions } from './helpers';
 
 /**
  * @author Joshua Tzucker
+ * @file main.ts
  * Note: @override is used to denote function that is required and expected by connector implementation
  * REMINDER TO SELF: Use console.log() instead of Logger.log(), if you want logs to show up in StackDriver!
  * REMINDER: DO NOT USE 'GoogleAppsScript' in a way that will force it to show up in generated JS. Should only be used as interface; does not actually exist as obj in GAS online.
  *      - That is why I have called some enums at the start and stored as var, so they can be referenced instead
+ * @TODO - How to deal with currency?
+ *      - I could always return USD, and leave it up to user to know what their Toggl setting is and convert on their own...
+ *      - I have to tell GDS the currency in advance, so if I wanted it to be dynamic based on Toggl setting, I would have to make double API calls...
+ *      - Messy but reliable option: make a field for every single currency Toggl might return, and then map based on response
+ * @TODO - Implement caching
  */
 
  /**
@@ -297,7 +303,7 @@ let myFields: {[index:string]:fieldMapping} = {
         }
         // @TODO togglMapping
     },
-    // Time
+    // !!! - Time Field - !!!
     time: {
         dimension: false,
         id: 'time',
@@ -305,7 +311,8 @@ let myFields: {[index:string]:fieldMapping} = {
         description: 'Logged Time',
         togglMapping: {
             fields: {
-                TogglDetailedEntry: ['dur']
+                TogglDetailedEntry: ['dur'],
+                TogglSummaryEntry: ['time']
             },
             formatter: (duration:number)=>{
                 return Converters.togglDurationToGdsDuration(duration);
@@ -318,7 +325,7 @@ let myFields: {[index:string]:fieldMapping} = {
             aggregationType: aggregationTypeEnum.SUM
         }
     }
-    // @TODO - Add "tags"
+    // @TODO - Add "tags", "title" or "entryTitle" (maps to time_entry), "rate"
 }
 
 /**
@@ -493,9 +500,6 @@ function getData(request:GetDataRequest){
         return false;
     }
 
-    // Get ready to hold response from API before conversion
-    let apiResponse = TogglApi.getResponseTemplate();
-
     try {
         if (dateDimensionRequired){
             myConsole.log('dateDimensionRequired');
@@ -511,11 +515,12 @@ function getData(request:GetDataRequest){
                 return Exceptions.throwGenericApiErr();
             }
         }
-        else if (projectDimensionRequired){
-            // If dateDimensionRequired is false, and uses has requested project details, we can query the summary endpoint and group by project
-            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,'projects');
+        else if (projectDimensionRequired || clientDimensionRequired){
+            // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
+            let grouping:'projects'|'clients' = (projectDimensionRequired ? 'projects' : 'clients');
+            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping);
             if (res.success){
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,'projects');
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
                 return returnData;
             }
             else {
@@ -537,12 +542,6 @@ function getData(request:GetDataRequest){
             .throwException();
         return false;
     }
-
-    // console.log(returnData);
-    // console.log(JSON.stringify(requestedFields.build(),null,4));
-    
-    // @TODO
-    //return returnData;
 }
 
 /**

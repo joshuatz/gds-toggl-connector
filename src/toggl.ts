@@ -222,6 +222,10 @@ export class TogglApi {
             resolve(true);
         });
     }
+    static delaySync(ms:number){
+        // This should be blocking/sync by default
+        Utilities.sleep(ms);
+    }
 
     private _getAuthHeaders(){
         return {
@@ -243,12 +247,12 @@ export class TogglApi {
             return TogglApi.getResponseTemplate(false);
         }
     }
-    async getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
+    getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
         myConsole.log('starting getDetailsReportAllPages');
         let currPage = (startPage || 1);
         let done = false;
         try {
-            let startResult = await this.getDetailedReport(workspaceId,since,until,currPage);
+            let startResult = this.getDetailedReport(workspaceId,since,until,currPage);
             //myConsole.log(startResult);
             // Need to check for pagination...
             if (startResult.success && startResult.raw['per_page'] && startResult.raw['total_count']){
@@ -262,10 +266,10 @@ export class TogglApi {
                     let finalResult = TogglApi.getResponseTemplate(true);
                     myConsole.log('getDetailsReportAllPages - starting pagination');
                     while (!done){
-                        await TogglApi.delay(1000);
+                        TogglApi.delaySync(1000);
                         currPage++;
                         myConsole.log('Current Page = ' + currPage);
-                        let currResult = await this.getDetailedReport(workspaceId,since,until,currPage);
+                        let currResult = this.getDetailedReport(workspaceId,since,until,currPage);
                         if (currResult.success && Array.isArray(currResult.raw['data'])){
                             fetchedNum = numPerPage * currPage;
                             done = (fetchedNum < totalCount);
@@ -297,7 +301,7 @@ export class TogglApi {
             throw(e);
         }
     }
-    async getDetailedReport(workspaceId:number,since:Date,until:Date,page?:number){
+    getDetailedReport(workspaceId:number,since:Date,until:Date,page?:number){
         let currPage = (page || 1);
         let requestParams: TogglDetailedReportRequestParams = {
             workspace_id: workspaceId,

@@ -477,7 +477,8 @@ function getData(request:GetDataRequest){
     if (dateDimensionRequired && !blocker){
         myConsole.log('dateDimensionRequired');
         // The only request type that a date dimension is the detailed report
-        togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd).then((res)=>{
+        try {
+            let res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd);
             myConsole.log(res);
             if (res.success){
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
@@ -490,13 +491,14 @@ function getData(request:GetDataRequest){
                     .setText('API responded, but something went wrong')
                     .throwException();
             }
-        }).catch((err)=>{
+        }
+        catch (err){
             cc.newUserError()
                 .setDebugText(err.toString())
                 .setText('Something went wrong fetching from Toggl')
                 .throwException();
             return false;
-        });
+        }
     }
     else {
         myConsole.log({'message':'REPLACEME'});
@@ -659,6 +661,27 @@ function testPromises(){
         myConsole.log(res);
     });
 }
+
+// function testPromiseResolution(inputNumber){
+//     let myPromise = new Promise((resolve,reject)=>{
+//         setTimeout(()=>{
+//             resolve(inputNumber*2);
+//         },500);
+//     });
+//     return myPromise.then((res)=>{
+//         return res;
+//     });
+// }
+
+// async function testPromiseResolutionAsync(inputNumber){
+//     let myPromise = new Promise((resolve,reject)=>{
+//         setTimeout(()=>{
+//             resolve(inputNumber*2);
+//         },500);
+//     });
+//     var res = await myPromise;
+//     return res;
+// }
 
 /**
  * Extracts the value from a Toggl API response entry, and converts it based on the destination GDS column

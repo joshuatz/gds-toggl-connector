@@ -129,6 +129,20 @@ export class Converters {
             return new Date(gdsDashedDate);
         }   
     }
+
+    static formatCurrencyForGds(amount:null|number|string){
+        if (amount){
+            if (typeof(amount)==='string'){
+                return parseFloat(amount);
+            }
+            else {
+                return amount;
+            }
+        }
+        else {
+            return 0.00;
+        }
+    }
 }
 
 /**

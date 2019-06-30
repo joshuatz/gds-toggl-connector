@@ -138,8 +138,8 @@ export interface fieldMapping {
         fields: {
             [index:string]: Array<string>|undefined,
             TogglDetailedEntry?: Array<string>,
-            TogglProjectGroupedEntry?: Array<string>,
-            TogglUserGroupedEntry?: Array<string>,
+            TogglWeeklyProjectGroupedEntry?: Array<string>,
+            TogglWeeklyUserGroupedEntry?: Array<string>,
             TogglSummaryEntry?: Array<string>
         },
         formatter?: Function
@@ -197,8 +197,8 @@ let myFields: {[index:string]:fieldMapping} = {
         togglMapping: {
             fields: {
                 TogglDetailedEntry: ['pid'],
-                TogglProjectGroupedEntry: ['pid'],
-                TogglUserGroupedEntry: ['details.pid'],
+                TogglWeeklyProjectGroupedEntry: ['pid'],
+                TogglWeeklyUserGroupedEntry: ['details.pid'],
                 TogglSummaryEntry: ['pid']
             }
         },
@@ -215,6 +215,13 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'DIMENSION',
             semanticType: fieldTypeEnum.TEXT
+        },
+        togglMapping: {
+            fields: {
+                TogglDetailedEntry: ['project'],
+                TogglWeeklyProjectGroupedEntry: ['title.project'],
+                TogglSummaryEntry: ['title.project']
+            }
         }
     },
     // Clients
@@ -226,6 +233,12 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'DIMENSION',
             semanticType: fieldTypeEnum.NUMBER
+        },
+        togglMapping: {
+            fields: {
+                // Client ID is only returned in reports explicitly grouped by client - e.g. summary
+                TogglSummaryEntry: ['cid']
+            }
         }
     },
     clientName: {
@@ -236,6 +249,13 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'DIMENSION',
             semanticType: fieldTypeEnum.TEXT
+        },
+        togglMapping: {
+            fields: {
+                TogglDetailedEntry: ['client'],
+                TogglWeeklyProjectGroupedEntry: ['title.client'],
+                TogglSummaryEntry: ['title.client']
+            }
         }
     },
     // Billing Info
@@ -247,6 +267,12 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'METRIC',
             semanticType: fieldTypeEnum.CURRENCY_USD
+        },
+        togglMapping: {
+            fields: {
+                TogglDetailedEntry: ['billable']
+            },
+            formatter: Converters.formatCurrencyForGds
         }
     },
     billableTimeTotal: {
@@ -258,6 +284,7 @@ let myFields: {[index:string]:fieldMapping} = {
             conceptType: 'METRIC',
             semanticType: fieldTypeEnum.DURATION
         }
+        // @TODO togglMapping
     },
     isBillable: {
         dimension: false,
@@ -268,6 +295,7 @@ let myFields: {[index:string]:fieldMapping} = {
             conceptType: 'METRIC',
             semanticType: fieldTypeEnum.BOOLEAN
         }
+        // @TODO togglMapping
     },
     // Time
     time: {
@@ -290,6 +318,7 @@ let myFields: {[index:string]:fieldMapping} = {
             aggregationType: aggregationTypeEnum.SUM
         }
     }
+    // @TODO - Add "tags"
 }
 
 /**
@@ -431,12 +460,6 @@ function getData(request:GetDataRequest){
     }
     let dateRangeStart:Date = forceDateToStartOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.startDate));
     let dateRangeEnd:Date = forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
-    // myConsole.log({
-    //     dateRangeStartString: request.dateRange.startDate,
-    //     dateRangeStart: dateRangeStart,
-    //     dateRangeEndString: request.dateRange.endDate,
-    //     dateRangeEnd: dateRangeEnd
-    // });
 
     // Certain things in what is requested can change how route used to retrieve data...
     let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
@@ -588,7 +611,6 @@ function mapTogglResponseToGdsFields(
             if (fieldMapping.id ==='day' && fieldMapping.semantics.conceptType==='DIMENSION'){
                 // !!! - Special - !!!
                 // Sometimes Toggl will return entries that overlap days. This can lead to the dreaded "number of columns returned don't match requested" error from GDS if blinding returning a date that GDS did not actually request.
-                // let augmentedMapping = Object.assign({},fieldMapping);
                 
                 if (typeof(fieldMapping.togglMapping)==='object'){
                     // Take care to make copy so not modifying reference
@@ -603,26 +625,14 @@ function mapTogglResponseToGdsFields(
                                 // Convert Toggl date to true Date Obj
                                 // Note - Toggl includes Timezone with date ("start":"2019-06-28T18:54:50-07:00"), so remove it to make compatible with checking date range (with uses GMT)
                                 let convertedDate:Date = new Date(date.replace(/(\d{4}-\d{2}-\d{2}T[^-]+-).*/,'$100:00'));
-                                // let convertedDate:Date = new Date(date);
                                 return convertedDate;
                             }
                         }
                     }
-                    // augmentedMapping.togglMapping.formatter = (date:string)=>{
-                    //     // Convert Toggl date to true Date Obj
-                    //     // Note - Toggl includes Timezone with date ("start":"2019-06-28T18:54:50-07:00"), so remove it to make compatible with checking date range (with uses GMT)
-                    //     let convertedDate:Date = new Date(date.replace(/(\d{4}-\d{2}-\d{2}T[^-]+-).*/,'$100:00'));
-                    //     // let convertedDate:Date = new Date(date);
-                    //     return convertedDate;
-                    // }
                     let fieldDate:Date = extractValueFromEntryWithMapping(entry,augmentedMapping,entryTypeStringIndex);
                     if (!getIsDateInDateTimeRange(fieldDate,requestedStart,requestedEnd)){
                         suppressRow = true;
                         suppressedRowCount++;
-                        if (suppressedRowCount <= 1){
-                            // myConsole.log('Local ==> suppressed date! - Date = ' + fieldDate.toString() + ' || requestedStart  = '  + requestedStart.toString() + ' || requestedEnd = ' + requestedEnd.toString());
-                            // myConsole.log('GMT ==> suppressed date! - Date = ' + fieldDate.toUTCString() + ' || requestedStart  = '  + requestedStart.toUTCString() + ' || requestedEnd = ' + requestedEnd.toUTCString());
-                        }
                     }
                 }
             }
@@ -634,54 +644,11 @@ function mapTogglResponseToGdsFields(
         }
     }
 
-    // Need to iterate over data *again* and check for rows that need to be aggregated. E.g., if there are two rows with same day dimension, they need to be combined
-    for (let x=0; x<mappedData.length; x++){
-
-    }
-
     // Since Toggl might not return data for *every* date that GDS requested, should go back in and backfill...
     // @TODO
 
     return mappedData;
 }
-
-function extractPrimaryDimensions(requestedFields:GoogleAppsScript.Data_Studio.Fields){
-    let dimensions = {
-
-    }
-}
-
-function testPromises(){
-    let myPromise = new Promise((resolve,reject)=>{
-        setTimeout(()=>{
-            resolve('Resolving promise!');
-        },200);
-    });
-    myPromise.then((res)=>{
-        myConsole.log(res);
-    });
-}
-
-// function testPromiseResolution(inputNumber){
-//     let myPromise = new Promise((resolve,reject)=>{
-//         setTimeout(()=>{
-//             resolve(inputNumber*2);
-//         },500);
-//     });
-//     return myPromise.then((res)=>{
-//         return res;
-//     });
-// }
-
-// async function testPromiseResolutionAsync(inputNumber){
-//     let myPromise = new Promise((resolve,reject)=>{
-//         setTimeout(()=>{
-//             resolve(inputNumber*2);
-//         },500);
-//     });
-//     var res = await myPromise;
-//     return res;
-// }
 
 /**
  * Extracts the value from a Toggl API response entry, and converts it based on the destination GDS column

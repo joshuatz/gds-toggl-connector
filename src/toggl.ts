@@ -107,7 +107,7 @@ export interface TogglDetailedReportResponse extends TogglStandardReportResponse
 /**
  * Entry summary belong to a specific project. Returned by requests that request grouping by report
  */
-export interface TogglProjectGroupedEntry {
+export interface TogglWeeklyProjectGroupedEntry {
     title : {
         client: null|string,
         project: null|string,
@@ -125,7 +125,7 @@ export interface TogglProjectGroupedEntry {
     }>
 }
 
-export interface TogglUserGroupedEntry {
+export interface TogglWeeklyUserGroupedEntry {
     title : {
         user: string
     },
@@ -144,7 +144,7 @@ export interface TogglUserGroupedEntry {
 }
 
 export interface TogglWeeklyReportResponse extends TogglStandardReportResponse {
-    data: Array<TogglProjectGroupedEntry|TogglUserGroupedEntry>
+    data: Array<TogglWeeklyProjectGroupedEntry|TogglWeeklyUserGroupedEntry>
 }
 
 export interface TogglSummaryEntry {
@@ -157,6 +157,11 @@ export interface TogglSummaryEntry {
         color?: string,
         hex_color?: string
     },
+    time: number,
+    total_currencies: null|[{
+        currency: string|null,
+        amount: number|null
+    }],
     items: Array<{
         title: {
             project?: string,
@@ -171,6 +176,7 @@ export interface TogglSummaryEntry {
         rate:null|number
     }>
 }
+
 export interface TogglSummaryReportResponse extends TogglStandardReportResponse {
     data: Array<TogglSummaryEntry>
 }
@@ -182,8 +188,8 @@ export enum usedTogglResponseTypes {
 }
 export enum usedToggleResponseEntriesTypes {
     TogglDetailedEntry,
-    TogglProjectGroupedEntry,
-    TogglUserGroupedEntry,
+    TogglWeeklyProjectGroupedEntry,
+    TogglWeeklyUserGroupedEntry,
     TogglSummaryEntry
 }
 

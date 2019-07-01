@@ -486,10 +486,13 @@ function getData(request:GetDataRequest){
 
     let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
     let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
+
+    // Config options
     let workspaceId:number = -1;
+    let prefilterBillable = false;
 
     // Extract config configParams
-    if (request.configParams){
+    if (request.configParams && typeof(request.configParams)==='object'){
         if (typeof(request.configParams['workspaceId'])!=='undefined'){
             try {
                 workspaceId = parseInt(request.configParams['workspaceId'],10);
@@ -503,6 +506,7 @@ function getData(request:GetDataRequest){
             blocker = true;
             blockerReason = 'Workspace ID is required for all requests!';
         }
+        prefilterBillable = request.configParams['prefilterBillable'] == true;
     }
 
     // Early return if anything is missing

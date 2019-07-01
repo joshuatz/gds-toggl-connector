@@ -76,7 +76,8 @@ export class TogglApi {
             return TogglApi.getResponseTemplate(false);
         }
     }
-    getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number){
+    getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number,filterToBillable?:boolean){
+        filterToBillable = typeof(filterToBillable)==='boolean' ? filterToBillable : false;
         // @TODO limit number of pages requested? Return userError if exceeded?
         myConsole.log('starting getDetailsReportAllPages');
         let currPage = (startPage || 1);
@@ -99,7 +100,7 @@ export class TogglApi {
                         TogglApi.delaySync(1000);
                         currPage++;
                         myConsole.log('Current Page = ' + currPage);
-                        let currResult = this.getDetailedReport(workspaceId,since,until,currPage);
+                        let currResult = this.getDetailedReport(workspaceId,since,until,currPage,filterToBillable);
                         if (currResult.success && Array.isArray(currResult.raw['data'])){
                             fetchedNum = numPerPage * currPage;
                             done = (fetchedNum < totalCount);
@@ -131,14 +132,17 @@ export class TogglApi {
             throw(e);
         }
     }
-    getDetailedReport(workspaceId:number,since:Date,until:Date,page?:number){
+    getDetailedReport(workspaceId:number,since:Date,until:Date,page?:number,filterToBillable?:boolean){
+        filterToBillable = typeof(filterToBillable)==='boolean' ? filterToBillable : false;
+        let filterToBillableString:'yes'|'both'|'no' = filterToBillable==true ? 'yes' : 'both';
         let currPage = (page || 1);
         let requestParams: TogglDetailedReportRequestParams = {
             workspace_id: workspaceId,
             user_agent: this._userAgent,
             since: since,
             until: until,
-            page: currPage
+            page: currPage,
+            billable: filterToBillableString
         }
         let url:string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
         url = TogglApi.requestParamsToQueryString(requestParams,url);
@@ -153,14 +157,17 @@ export class TogglApi {
             throw(e);
         }
     }
-    getSummaryReport(workspaceId:number,since:Date,until:Date,grouping:'projects'|'clients'|'users'='projects',subgrouping:'time_entries'|'tasks'|'projects'|'users'='time_entries'){
+    getSummaryReport(workspaceId:number,since:Date,until:Date,grouping:'projects'|'clients'|'users'='projects',subgrouping:'time_entries'|'tasks'|'projects'|'users'='time_entries',filterToBillable?:boolean){
+        filterToBillable = typeof(filterToBillable)==='boolean' ? filterToBillable : false;
+        let filterToBillableString:'yes'|'both'|'no' = filterToBillable==true ? 'yes' : 'both';
         let requestParams: TogglSummaryReportRequestParams = {
             workspace_id: workspaceId,
             user_agent: this._userAgent,
             since: since,
             until: until,
             grouping: grouping,
-            subgrouping: subgrouping
+            subgrouping: subgrouping,
+            billable: filterToBillableString
         }
         // Check for valid combinations - subgrouping cannot be same as grouping
         if (grouping===subgrouping){

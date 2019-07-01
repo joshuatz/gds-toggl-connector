@@ -5,6 +5,7 @@
     "main": "main.ts",
     "fileOrder": [
         "helpers.ts",
+        "toggl-types.ts",
         "toggl.ts",
         "main.ts",
         "auth.ts"

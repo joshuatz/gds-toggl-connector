@@ -1,4 +1,5 @@
 # gds-toggl-connector
+# Work in progress, probably about 80% done.
 ## Unofficial Google Data Studio connector for Toggl Timer
 
 @TODO Add image demos here
@@ -24,12 +25,12 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
 
 ## TODO List
  - High Priority
+     - Fill out appsscript.json
      - Implement caching
      - Resolve possible timezone issues
  - Everything else:
      - Add tests
      - Try to refactor getData() into more split out functions
-     - Move interfaces into separate files
      - Make workspace ID optional if user only has one workspace - try to get ID in advanced by making API call and cache result.
          - API: https://www.toggl.com/api/v8/workspaces
          - Could actually provide dropdown in getConfig() based on results...

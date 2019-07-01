@@ -1,6 +1,6 @@
 import 'google-apps-script';
 import {getUserApiKey} from './auth';
-import { TogglApi, TogglDetailedReportResponse,TogglSummaryReportResponse,TogglDetailedEntry, TogglStandardReportResponse,TogglSummaryEntry, usedTogglResponseTypes, usedToggleResponseEntriesTypes, responseTemplate } from './toggl';
+import { TogglApi, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
 import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTimeRange, forceDateToStartOfDay, forceDateToEndOfDay, Exceptions } from './helpers';
 
 /**

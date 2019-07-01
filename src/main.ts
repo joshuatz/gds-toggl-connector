@@ -91,6 +91,7 @@ var AUTH_HELP_URL = 'https://toggl.com/app/profile';
 var APIKEY_STORAGE = 'dscc.key';
 var IS_DEBUG:boolean = true;
 var APP_USER_AGENT: string = 'https://github.com/joshuatz/gds-toggl-connector'
+
 /**
  * MAIN - Setup globals
  */
@@ -574,6 +575,8 @@ function isAdminUser(){
  *      - Everything needs to be aggregated by dimension and # needs to match; e.g. if GDS requests two dimensions (columns), only two data points per row should be returned, and no 2 rows should have the same value for the same dimension + metric combo (basically xy combo)
  * @param requestedFields 
  * @param requestedFieldIds 
+ * @param requestedStart 
+ * @param requestedEnd
  * @param response 
  * @param responseType 
  * @param entryType 
@@ -740,6 +743,9 @@ function testDateString(){
     myConsole.log(test);
 }
 
+/**
+ * Check if a given field can be found in the interface for the given response entry type (from the API)
+ */
 function getIsFieldInResponseEntryType(fieldId:string,entryTypeStringIndex:string){
     let fieldMapping = myFields[fieldId].togglMapping;
     if (fieldMapping){

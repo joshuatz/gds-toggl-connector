@@ -106,7 +106,37 @@ export var togglApiInst = new TogglApi(getUserApiKey());
  */
 function getConfig() {
 	// Get config obj provided by gds-connector
-	let config = cc.getConfig();
+    let config = cc.getConfig();
+    
+    // Get list of workspace IDs that the user has access to
+    let foundWorkspaces = false;
+        try {
+            let workspaceResponse = togglApiInst.getWorkspaceIds();
+            if (workspaceResponse.success && Array.isArray(workspaceResponse.raw)){
+                let workspaceArr:any[] = workspaceResponse.raw;
+                let workspaceSelectConfigField = config.newSelectSingle()
+                    .setId('workspaceId')
+                    .setName('Toggl Workspace')
+                    .setHelpText('Select the Workspace to pull data from')
+                    .setAllowOverride(false);
+                for (let x=0; x<workspaceArr.length; x++){
+                    let currWorkspace = workspaceArr[x];
+                    workspaceSelectConfigField.addOption(config.newOptionBuilder().setLabel(currWorkspace.name).setValue(currWorkspace.id.toString()));
+                }
+                foundWorkspaces = true;
+            }
+        }
+        catch (e){
+            foundWorkspaces = false;
+        }
+    if (!foundWorkspaces){
+        // Fallback to plain text field
+        config.newTextInput()
+            .setId('workspaceId')
+            .setName('Toggl Workspace ID')
+            .setHelpText('Numerical ID for your workspace')
+            .setPlaceholder('123456');
+    }
 
 	// Set config general info
 	config.newInfo()
@@ -114,11 +144,7 @@ function getConfig() {
         .setText('Configure the connector for Toggl');
     
     // Require workspace ID (necessary for all report API calls)
-    config.newTextInput()
-        .setId('workspaceId')
-        .setName('Toggl Workspace ID')
-        .setHelpText('Numerical ID for your workspace')
-        .setPlaceholder('123456');
+    
 
     // Allow pre-filtering to just billable time
     config.newCheckbox()

@@ -43,7 +43,8 @@ export class TogglApi {
     static readonly endpoints = {
         user : {
             me_simple: "/me?with_related_data=false",
-            me_full:  "/me?with_related_data=true"
+            me_full:  "/me?with_related_data=true",
+            workspaces : "/workspaces"
         },
         reports : {
             weekly : "/weekly",
@@ -190,6 +191,18 @@ export class TogglApi {
     }
     getWeeklyReport(){
         // @TODO
+    }
+    getWorkspaceIds(){
+        let url:string = this._userApiBase + TogglApi.endpoints.user.workspaces;
+        try {
+            let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
+            let result = TogglApi.parseJsonResponse(apiResponse);
+            return result;
+        }
+        catch (e){
+            myConsole.error(e);
+            throw(e);
+        }
     }
     assembleAuthHeader(){
         return 'Basic ' + Utilities.base64Encode(this._authToken + ':api_token');

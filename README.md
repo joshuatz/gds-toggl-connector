@@ -15,7 +15,7 @@ Users must provide just a few details when setting up the connector for the firs
  - Authentication:
      - User's API token is required. It can be obtained at the bottom of [https://toggl.com/app/profile](https://toggl.com/app/profile).
  - General configuration
-     - Workspace ID: This is a numerical ID provided by Toggl, that is used to separate accounts into logical "workspaces".
+     - Workspace: This is a space that a user belongs to in Toggl, that is used to separate accounts into logical "workspaces".
      - Pre-filter billable: All data return by the connector will only be for billable entries, as opposed to both billable and non-billable. The benefit to the user would be that if they only care about billable time, they want have to keep adding filters to all their reports/widgets to keep non-billable time out.
 
 ## Build Process
@@ -31,8 +31,5 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
  - Everything else:
      - Add tests
      - Try to refactor getData() into more split out functions
-     - Make workspace ID optional if user only has one workspace - try to get ID in advanced by making API call and cache result.
-         - API: https://www.toggl.com/api/v8/workspaces
-         - Could actually provide dropdown in getConfig() based on results...
  - Optional:
      - Setup clasp, but only with final output JS file (should be pretty easy to setup)

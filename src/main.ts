@@ -465,8 +465,9 @@ function getData(request:GetDataRequest){
     let userCache:GoogleAppsScript.Cache.Cache = CacheService.getUserCache();
 
     // Grab fields off incoming request
-    let requestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
-    let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(requestedFieldIds);
+    let unorderedRequestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
+    let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(unorderedRequestedFieldIds);
+    let orderedRequestedFieldIds = requestedFields.asArray().map((field)=>{return field.getId()});
 
     // What the final result should look like
     let returnData: GetDataReturnObj = {
@@ -516,16 +517,16 @@ function getData(request:GetDataRequest){
     let canUseWeeklyProjectReport = true;
     let canUseWeeklyUserReport = true;
     let canUseSummaryReport = true;
-    for (let x=0; x<requestedFieldIds.length; x++){
-        let fieldId = requestedFieldIds[x];
+    for (let x=0; x<orderedRequestedFieldIds.length; x++){
+        let fieldId = orderedRequestedFieldIds[x];
         canUseDetailedReport = !canUseDetailedReport ? canUseDetailedReport : getIsFieldInResponseEntryType(fieldId,'TogglDetailedEntry');
         canUseWeeklyProjectReport = !canUseWeeklyProjectReport ? canUseWeeklyProjectReport : getIsFieldInResponseEntryType(fieldId,'TogglWeeklyProjectGroupedEntry');
         canUseWeeklyUserReport = !canUseWeeklyUserReport ? canUseWeeklyUserReport : getIsFieldInResponseEntryType(fieldId,'TogglWeeklyUserGroupedEntry');
         canUseSummaryReport = !canUseSummaryReport ? canUseSummaryReport :  getIsFieldInResponseEntryType(fieldId,'TogglSummaryEntry');
     }
 
-    let dateDimensionRequired:boolean = requestedFieldIds.indexOf('day')!==-1;
-    let projectDimensionRequired:boolean = (requestedFieldIds.indexOf('projectId')!==-1||requestedFieldIds.indexOf('projectName')!==-1);
+    let dateDimensionRequired:boolean = orderedRequestedFieldIds.indexOf('day')!==-1;
+    let projectDimensionRequired:boolean = (orderedRequestedFieldIds.indexOf('projectId')!==-1||orderedRequestedFieldIds.indexOf('projectName')!==-1);
 
     // Config options
     let workspaceId:number = -1;
@@ -585,7 +586,7 @@ function getData(request:GetDataRequest){
                 // Cache results
                 userCache.put(cacheKey,JSON.stringify(res));
                 // Map to getData rows
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
                 returnData.cachedData = foundInCache;
                 return returnData;
             }
@@ -626,7 +627,7 @@ function getData(request:GetDataRequest){
                 // Cache results
                 userCache.put(cacheKey,JSON.stringify(res));
                 // Map to getData rows
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
+                returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
                 returnData.cachedData = foundInCache;
                 myConsole.log(returnData);
                 return returnData;

@@ -147,6 +147,7 @@ export class TogglApi {
         }
         let url:string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
         url = TogglApi.requestParamsToQueryString(requestParams,url);
+        myConsole.log(url);
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
             // @TODO refactor to use typed results (:TogglDetailedReportResponse)
@@ -179,6 +180,7 @@ export class TogglApi {
         }
         let url:string = this._reportApiBase + TogglApi.endpoints.reports.summary;
         url = TogglApi.requestParamsToQueryString(requestParams,url);
+        myConsole.log(url);
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
             let result = TogglApi.parseJsonResponse(apiResponse);

@@ -33,3 +33,9 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
      - Try to refactor getData() into more split out functions
  - Optional:
      - Setup clasp, but only with final output JS file (should be pretty easy to setup)
+
+## Atrribution
+ - Logo
+     - "Iconoteka - Timeline Icon", By Oleg Turbaba, [link](https://www.iconfinder.com/icons/3507754/iconoteka_time_timeline_icon)
+        - Creative Commons, Attribution, 3.0
+        - [full license](https://creativecommons.org/licenses/by/3.0/legalcode)

@@ -199,19 +199,31 @@ export function aggregateValues(values:any[],mappings:fieldMapping[]){
     
 }
 
-export function getIsDateInDateTimeRange(dateTimeToCheck:Date,startDateTime:Date,endDateTime:Date){
-    return dateTimeToCheck >= startDateTime && dateTimeToCheck <= endDateTime;
-}
-
-export function forceDateToStartOfDay(input:Date){
-    let result:Date = new Date(input.getTime());
-    result.setUTCHours(0,0,0,0);
-    return result;
-}
-export function forceDateToEndOfDay(input:Date){
-    let result:Date = new Date(input.getTime());
-    result.setUTCHours(23,59,59,999);
-    return result;
+export class DateUtils {
+    static getIsDateInDateTimeRange(dateTimeToCheck:Date,startDateTime:Date,endDateTime:Date){
+        return dateTimeToCheck >= startDateTime && dateTimeToCheck <= endDateTime;
+    }
+    static getIsDateWithinXDaysOf(dateTimeToCheck:Date,dateToSetRangeAround:Date,xDaysAround:number){
+        xDaysAround = Math.abs(xDaysAround);
+        let rangeStart:Date = DateUtils.offsetDateByDays(dateToSetRangeAround,(-1 * xDaysAround));
+        let rangeEnd:Date = DateUtils.offsetDateByDays(dateToSetRangeAround,xDaysAround);
+        return DateUtils.getIsDateInDateTimeRange(dateTimeToCheck,rangeStart,rangeEnd);
+    }
+    static offsetDateByDays(input:Date,offsetDays:number){
+        let offsetMs = offsetDays * 24 * 60 * 60 * 1000;
+        let resultDate:Date = new Date(input.getTime() + offsetMs);
+        return resultDate;
+    }
+    static forceDateToStartOfDay(input:Date){
+        let result:Date = new Date(input.getTime());
+        result.setUTCHours(0,0,0,0);
+        return result;
+    }
+    static forceDateToEndOfDay(input:Date){
+        let result:Date = new Date(input.getTime());
+        result.setUTCHours(23,59,59,999);
+        return result;
+    }
 }
 
 export class Exceptions {
@@ -222,4 +234,40 @@ export class Exceptions {
             .throwException();
         return false;
     }
+}
+
+export class CacheWrapper {
+    /**
+     * Generates a key of pipe-separated values - should look like "123|{'user':'joshua'}|ABC"
+     * @param inputs Array of anything to use for composite key
+     */
+    static generateKeyFromInputs(inputs:any[]){
+        let key:string = (new Date()).getTime().toString();
+        if (inputs.length > 0){
+            key = '';
+            for (let x=0; x<inputs.length; x++){
+                key += (x>0 ? '|' : '') + myStringifer(inputs[x])
+            }
+        }
+        return key;
+    }
+
+    static queryCacheForInputs(cache:GoogleAppsScript.Cache.Cache,inputs:any[]){
+        let key:string = CacheWrapper.generateKeyFromInputs(inputs);
+        return cache.get(key);
+    }
+}
+
+export function myStringifer(input:any){
+    let result:string = '';
+    if (typeof(input)==='object'){
+        result = JSON.stringify(input);
+    }
+    else if (typeof(input)==='string'){
+        result = input;
+    }
+    else if (typeof(input.toString)==='function'){
+        result = input.toString();
+    }
+    return result;
 }

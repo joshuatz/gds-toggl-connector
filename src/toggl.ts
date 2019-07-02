@@ -190,7 +190,7 @@ export class TogglApi {
         }
     }
     getWeeklyReport(){
-        // @TODO
+        // @TODO ? - not really necessary for GDS implementation
     }
     getWorkspaceIds(){
         let url:string = this._userApiBase + TogglApi.endpoints.user.workspaces;

@@ -1,7 +1,8 @@
 import 'google-apps-script';
 import {getUserApiKey} from './auth';
 import { TogglApi, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
-import { Converters, recurseFromString, myConsole, setTimeout, getIsDateInDateTimeRange, forceDateToStartOfDay, forceDateToEndOfDay, Exceptions } from './helpers';
+import { Converters, recurseFromString, myConsole, DateUtils, Exceptions, CacheWrapper } from './helpers';
+import { responseTemplate } from './toggl-types';
 
 /**
  * @author Joshua Tzucker
@@ -370,7 +371,7 @@ let myFields: {[index:string]:fieldMapping} = {
             aggregationType: aggregationTypeEnum.SUM
         }
     }
-    // @TODO - Add "tags", "title" or "entryTitle" (maps to time_entry), "rate"
+    // @TODO - Add "tags", "title" or "entryTitle" (maps to time_entry), "rate", entry "id"
 }
 
 /**
@@ -460,6 +461,9 @@ function getSchema(request:SchemaRequest) {
 function getData(request:GetDataRequest){
     myConsole.log(request);
 
+    let now:Date = new Date();
+    let userCache:GoogleAppsScript.Cache.Cache = CacheService.getUserCache();
+
     // Grab fields off incoming request
     let requestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
     let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(requestedFieldIds);
@@ -486,6 +490,10 @@ function getData(request:GetDataRequest){
     let blocker:boolean = false;
     let blockerReason:string = '';
 
+    // FLAG - is there a reason to avoid using cache?
+    let avoidCache:boolean = false;
+    let foundInCache:boolean = false;
+
     // Grab date stuff off incoming request
     let lastRefreshedTime:Date;
     if (typeof(request.scriptParams)==='object' && typeof(request.scriptParams.lastRefresh)==='string'){
@@ -494,8 +502,14 @@ function getData(request:GetDataRequest){
     else {
         lastRefreshedTime = new Date(new Date().getTime() - (12*60*60*1000));
     }
-    let dateRangeStart:Date = forceDateToStartOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.startDate));
-    let dateRangeEnd:Date = forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
+    let dateRangeStart:Date = DateUtils.forceDateToStartOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.startDate));
+    let dateRangeEnd:Date = DateUtils.forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
+    
+    // Avoid cache if either end of range is within 2 days of today - since users are more likely to have recently edited entries within that span
+    if (DateUtils.getIsDateWithinXDaysOf(dateRangeStart,now,2) || DateUtils.getIsDateWithinXDaysOf(dateRangeEnd,now,2)){
+        avoidCache = true;
+    }
+    
 
     // Certain things in what is requested can change how route used to retrieve data...
     let canUseDetailedReport = true;
@@ -548,9 +562,31 @@ function getData(request:GetDataRequest){
         if (!dateDimensionRequired && canUseSummaryReport){
             // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
             let grouping:'projects'|'clients' = (projectDimensionRequired ? 'projects' : 'clients');
-            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable);
+            let res:responseTemplate = TogglApi.getResponseTemplate(false);
+            let cacheKey:string = CacheWrapper.generateKeyFromInputs([workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable]);
+            if (!avoidCache){
+                try {
+                    let cacheValue:null|string = userCache.get(cacheKey);
+                    if (cacheValue){
+                        res = JSON.parse(cacheValue);
+                        foundInCache = true;
+                        myConsole.log('Used Cache!');
+                    }
+                }
+                catch (e){
+                    foundInCache = false;
+                }
+            }
+            if (!foundInCache){
+                res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable);
+                myConsole.log('No cache used for response');
+            }
             if (res.success){
+                // Cache results
+                userCache.put(cacheKey,JSON.stringify(res));
+                // Map to getData rows
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
+                returnData.cachedData = foundInCache;
                 return returnData;
             }
             else {
@@ -559,14 +595,39 @@ function getData(request:GetDataRequest){
         }
         else if (!dateDimensionRequired && (canUseWeeklyProjectReport || canUseWeeklyUserReport)){
             // @TODO
+            cc.newDebugError()
+                .setText('getData request resulted in trying to use getWeeklyReport, which has not been built yet')
+                .throwException();
         }
         else if (dateDimensionRequired || canUseDetailedReport){
             myConsole.log('dateDimensionRequired');
             // The only request type that a date dimension is the detailed report
-            let res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable);
+            let res:responseTemplate = TogglApi.getResponseTemplate(false);
+            let cacheKey:string = CacheWrapper.generateKeyFromInputs([workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable]);
+            if (!avoidCache){
+                try {
+                    let cacheValue:null|string = userCache.get(cacheKey);
+                    if (cacheValue){
+                        res = JSON.parse(cacheValue);
+                        foundInCache = true;
+                        myConsole.log('Used Cache!');
+                    }
+                }
+                catch (e){
+                    foundInCache = false;
+                }
+            }
+            if (!foundInCache){
+                res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable);
+                myConsole.log('No cache used for response');
+            }
             myConsole.log(res);
             if (res.success){
+                // Cache results
+                userCache.put(cacheKey,JSON.stringify(res));
+                // Map to getData rows
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
+                returnData.cachedData = foundInCache;
                 myConsole.log(returnData);
                 return returnData;
             }
@@ -691,7 +752,7 @@ function mapTogglResponseToGdsFields(
                         }
                     }
                     let fieldDate:Date = extractValueFromEntryWithMapping(entry,augmentedMapping,entryTypeStringIndex);
-                    if (!getIsDateInDateTimeRange(fieldDate,requestedStart,requestedEnd)){
+                    if (!DateUtils.getIsDateInDateTimeRange(fieldDate,requestedStart,requestedEnd)){
                         suppressRow = true;
                         suppressedRowCount++;
                     }
@@ -755,8 +816,8 @@ function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMappin
 function testDateString(){
     let startString = '2019-06-28';
     let startDate:Date = new Date(startString);
-    let forcedEnd:Date = forceDateToEndOfDay(startDate);
-    let forcedStart:Date = forceDateToStartOfDay(startDate);
+    let forcedEnd:Date = DateUtils.forceDateToEndOfDay(startDate);
+    let forcedStart:Date = DateUtils.forceDateToStartOfDay(startDate);
     let test:any = {
         input: startString,
         toString: startDate.toString(),

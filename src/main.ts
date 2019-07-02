@@ -548,7 +548,7 @@ function getData(request:GetDataRequest){
         if (!dateDimensionRequired && canUseSummaryReport){
             // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
             let grouping:'projects'|'clients' = (projectDimensionRequired ? 'projects' : 'clients');
-            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping);
+            let res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable);
             if (res.success){
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
                 return returnData;
@@ -563,7 +563,7 @@ function getData(request:GetDataRequest){
         else if (dateDimensionRequired || canUseDetailedReport){
             myConsole.log('dateDimensionRequired');
             // The only request type that a date dimension is the detailed report
-            let res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd);
+            let res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable);
             myConsole.log(res);
             if (res.success){
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,requestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);

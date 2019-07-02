@@ -77,14 +77,14 @@ export class TogglApi {
             return TogglApi.getResponseTemplate(false);
         }
     }
-    getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,startPage?:number,filterToBillable?:boolean){
+    getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,filterToBillable?:boolean,startPage?:number){
         filterToBillable = typeof(filterToBillable)==='boolean' ? filterToBillable : false;
         // @TODO limit number of pages requested? Return userError if exceeded?
         myConsole.log('starting getDetailsReportAllPages');
         let currPage = (startPage || 1);
         let done = false;
         try {
-            let startResult = this.getDetailedReport(workspaceId,since,until,currPage);
+            let startResult = this.getDetailedReport(workspaceId,since,until,currPage,filterToBillable);
             //myConsole.log(startResult);
             // Need to check for pagination...
             if (startResult.success && startResult.raw['per_page'] && startResult.raw['total_count']){

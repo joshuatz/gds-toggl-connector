@@ -25,12 +25,18 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
 
 ## TODO List
  - High Priority
-     - Fill out appsscript.json
-     - Implement caching
+     - Finish filling out appsscript.json
+         - Add report template
      - Resolve possible timezone issues
+     - Get connector officially published / distributed ?
+         - [Options](https://developers.google.com/datastudio/connector/publish-connector)
+             - [Partner Connector](https://developers.google.com/datastudio/connector/pscc-requirements)
+             - [(Open Source) Community Connector](https://developers.google.com/datastudio/connector/oscc-requirements)
  - Everything else:
      - Add tests
+     - Better way of invalidating cache (global cache keys?)
      - Try to refactor getData() into more split out functions
+     - Currency converters?
  - Optional:
      - Setup clasp, but only with final output JS file (should be pretty easy to setup)
 

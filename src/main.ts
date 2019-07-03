@@ -88,10 +88,11 @@ interface DataStudioFieldBuilt {
 /**
  * Some app-wide constants
  */
-var AUTH_HELP_URL = 'https://toggl.com/app/profile';
-var APIKEY_STORAGE = 'dscc.key';
-var IS_DEBUG:boolean = true;
-var APP_USER_AGENT: string = 'https://github.com/joshuatz/gds-toggl-connector'
+const AUTH_HELP_URL:string = 'https://toggl.com/app/profile';
+const APIKEY_STORAGE:string = 'dscc.key';
+const IS_DEBUG:boolean = true;
+const APP_USER_AGENT:string = 'https://github.com/joshuatz/gds-toggl-connector'
+const VALUE_FOR_NULL:any = '';
 
 /**
  * MAIN - Setup globals
@@ -269,8 +270,7 @@ let myFields: {[index:string]:fieldMapping} = {
         },
         togglMapping: {
             fields: {
-                TogglDetailedEntry: ['description'],
-                TogglSummaryEntry: ['subItem.title.time_entry']
+                TogglDetailedEntry: ['description']
             }
         }
     },
@@ -373,7 +373,7 @@ let myFields: {[index:string]:fieldMapping} = {
         togglMapping: {
             fields: {
                 TogglDetailedEntry: ['billable'],
-                TogglSummaryEntry: ['subItem.sum']
+                TogglSummaryEntry: ['totalBillingSum']
             },
             formatter: Converters.formatCurrencyForGds
         }
@@ -407,11 +407,13 @@ let myFields: {[index:string]:fieldMapping} = {
         description: 'Billing Rate',
         semantics: {
             conceptType: 'METRIC',
-            semanticType: fieldTypeEnum.CURRENCY_USD
+            semanticType: fieldTypeEnum.CURRENCY_USD,
+            isReaggregatable: true,
+            aggregationType: aggregationTypeEnum.AVG
         },
         togglMapping: {
             fields: {
-                TogglSummaryEntry: ['subItem.rate']
+                TogglSummaryEntry: ['avgBillingRate']
             },
             formatter: Converters.formatCurrencyForGds
         }
@@ -771,7 +773,7 @@ function getData(request:GetDataRequest){
                 .setDebugText('No API call was made, could not determine endpoint based on dimensions requested')
                 .setText('Invalid combination of dimensions')
                 .throwException();
-            return false;
+            myConsole.error('No API call was made, could not determine endpoint based on dimensions requested');
         }
     }
     catch (err){
@@ -779,7 +781,7 @@ function getData(request:GetDataRequest){
             .setDebugText(err.toString())
             .setText('Something went wrong fetching from Toggl')
             .throwException();
-        return false;
+        myConsole.error(err);
     }
 }
 
@@ -830,19 +832,24 @@ function mapTogglResponseToGdsFields(
             for (let x=0; x<entryArr.length; x++){
                 let entryBase = entryArr[x];
                 if (Array.isArray(entryBase['items']) && entryBase.items.length > 0){
+                    let cBillingRate = 0;
+                    let totalBillingSum = 0;
                     for (let s=0; s<entryBase.items.length; s++){
                         let subItem = entryBase.items[s];
-                        // Create a new entry, with subItem copied up and baseEntry details copied over
-                        // Copy item, not ref
-                        // NOTE - cast is any is to avoid TS error about es2017. Object.assign is being polyfilled through build step
-                        let comboItem = (Object as any).assign({},entryBase);
-                        comboItem['subItem'] = subItem;
+                        totalBillingSum += typeof(subItem.sum)==='number' ? subItem.sum : 0;
+                        cBillingRate += typeof(subItem.rate)==='number' ? subItem.rate : 0;
+                        let comboItem = {
+                            subItem: subItem
+                        }
                         flattenedEntries.push(comboItem);
                     }
+                    // Add calculated
+                    entryBase['avgBillingRate'] = cBillingRate / entryBase.items.length;
+                    entryBase['totalBillingSum'] = totalBillingSum;
                 }
-                else {
-                    flattenedEntries.push(entryBase);
-                }
+                // Remove items array from original, then push back as entry
+                delete entryBase.items;
+                flattenedEntries.push(entryBase);
             }
             // Make sure to update entryArr, which will be further mapped below
             entryArr = flattenedEntries;
@@ -943,10 +950,10 @@ function mapTogglResponseToGdsFields(
  * @param entry {object} - An entry off a Toggl API response
  * @param fieldMapping {fieldMapping} - My stored mapping of fields. Should contain semantics
  * @param entryTypeStringIndex {string} - Toggl entry type enum, converted to string
- * @return {null|any} - always returns a value, with null being the placeholder if no mapping was found. GDS always expects a value in column
+ * @return {any} - always returns a value, with VALUE_FOR_NULL global being the placeholder if no mapping was found. GDS always expects a value in column
  */
 function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMapping:fieldMapping,entryTypeStringIndex:string){
-    let extractedValue:any = null;
+    let extractedValue:any = VALUE_FOR_NULL;
     let togglMapping = fieldMapping.togglMapping;
     if (togglMapping){
         // Look up the individual field mappings
@@ -975,7 +982,7 @@ function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMappin
             }
         }
     }
-    extractedValue = typeof(extractedValue)!=='undefined' ? extractedValue : null;
+    extractedValue = typeof(extractedValue)!=='undefined' ? extractedValue : VALUE_FOR_NULL;
     return extractedValue;
 }
 

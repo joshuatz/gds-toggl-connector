@@ -209,8 +209,10 @@ export class TogglApi {
     assembleAuthHeader(){
         return 'Basic ' + Utilities.base64Encode(this._authToken + ':api_token');
     }
-    setAuthToken(authToken:string){
-        this._authToken = authToken;
+    setAuthToken(authToken:string|null){
+        if (authToken){
+            this._authToken = authToken;
+        }
     }
     static checkResponseValid(response: httpResponse){
         let validResponse: boolean = true;

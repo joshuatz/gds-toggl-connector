@@ -95,7 +95,7 @@ export class TogglApi {
                 if (fetchedNum < totalCount){
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice
-                    let finalResult = TogglApi.getResponseTemplate(true);
+                    let finalResult = startResult;
                     myConsole.log('getDetailsReportAllPages - starting pagination');
                     while (!done){
                         TogglApi.delaySync(1000);
@@ -113,7 +113,7 @@ export class TogglApi {
                         }
                     }
                     // Return result with array modified to include concatenated results from pages
-                    finalResult.raw = resultArr;
+                    finalResult.raw['data'] = resultArr;
                     return finalResult;
                 }
                 else {

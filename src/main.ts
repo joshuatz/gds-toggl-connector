@@ -473,18 +473,7 @@ function getData(request:GetDataRequest){
     let returnData: GetDataReturnObj = {
         "cachedData" : false,
         "schema" : requestedFields.build(),
-        "rows" : [
-            {
-                "values" : [
-                    '20170317','100'
-                ]
-            },
-            {
-                "values" : [
-                    '20170318','2005523'
-                ]
-            }
-        ]
+        "rows" : []
     }
 
     // FLAG - request is missing required info
@@ -765,6 +754,10 @@ function mapTogglResponseToGdsFields(
         if (!suppressRow){
             mappedData.push(row);
         }
+    }
+
+    if (suppressedRowCount > 0){
+        myConsole.log('Suppressed ' + suppressedRowCount.toString() + ' rows based on misaligned date');
     }
 
     // Since Toggl might not return data for *every* date that GDS requested, should go back in and backfill...

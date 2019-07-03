@@ -269,8 +269,8 @@ let myFields: {[index:string]:fieldMapping} = {
         },
         togglMapping: {
             fields: {
-                TogglDetailedEntry: ['description']
-                // @TODO map time_entry from summary entry report? Or just keep requiring that it use the detailed endpoint? Would need to "flatten" summary report to grab...
+                TogglDetailedEntry: ['description'],
+                TogglSummaryEntry: ['subItem.title.time_entry']
             }
         }
     },
@@ -372,7 +372,8 @@ let myFields: {[index:string]:fieldMapping} = {
         },
         togglMapping: {
             fields: {
-                TogglDetailedEntry: ['billable']
+                TogglDetailedEntry: ['billable'],
+                TogglSummaryEntry: ['subItem.sum']
             },
             formatter: Converters.formatCurrencyForGds
         }
@@ -398,6 +399,22 @@ let myFields: {[index:string]:fieldMapping} = {
             semanticType: fieldTypeEnum.BOOLEAN
         }
         // @TODO togglMapping
+    },
+    billingRate: {
+        dimension: false,
+        id: 'billingRate',
+        name: 'Billing Rate',
+        description: 'Billing Rate',
+        semantics: {
+            conceptType: 'METRIC',
+            semanticType: fieldTypeEnum.CURRENCY_USD
+        },
+        togglMapping: {
+            fields: {
+                TogglSummaryEntry: ['subItem.rate']
+            },
+            formatter: Converters.formatCurrencyForGds
+        }
     },
     // !!! - Time Field - !!!
     time: {
@@ -691,10 +708,13 @@ function getData(request:GetDataRequest){
                 myConsole.log('No cache used for response');
             }
             if (res.success){
-                // Cache results
-                userCache.put(cacheKey,JSON.stringify(res));
+                
                 // Map to getData rows
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
+                if (!foundInCache && returnData.rows.length > 0){
+                    // Cache results
+                    userCache.put(cacheKey,JSON.stringify(res));
+                }
                 returnData.cachedData = foundInCache;
                 return returnData;
             }
@@ -732,10 +752,12 @@ function getData(request:GetDataRequest){
             }
             myConsole.log(res);
             if (res.success){
-                // Cache results
-                userCache.put(cacheKey,JSON.stringify(res));
                 // Map to getData rows
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
+                if (!foundInCache && returnData.rows.length > 0){
+                    // Cache results
+                    userCache.put(cacheKey,JSON.stringify(res));
+                }
                 returnData.cachedData = foundInCache;
                 myConsole.log(returnData);
                 return returnData;
@@ -796,20 +818,51 @@ function mapTogglResponseToGdsFields(
     let entryTypeStringIndex:string = usedToggleResponseEntriesTypes[entryType];
     let mappedData: Array<DataReturnObjRow> = [];
     response.data = Array.isArray(response.data) ? response.data : [];
+    let entryArr = response.data;
+
+    // !!! Experimental flag, clean up later
+    const flattenItems:boolean = true;
+    if (flattenItems){
+        if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
+            // Each summary entry also contains a sub-array of entries that are grouped to that summary item. I am going to "flatten" these, so that each entry sub-item becomes its own actual entry, with the duplicated data from the parent entry.
+            // For example, one entry with three sub items would become three entries, with shared common data, but different time_entry data
+            let flattenedEntries = [];
+            for (let x=0; x<entryArr.length; x++){
+                let entryBase = entryArr[x];
+                if (Array.isArray(entryBase['items']) && entryBase.items.length > 0){
+                    for (let s=0; s<entryBase.items.length; s++){
+                        let subItem = entryBase.items[s];
+                        // Create a new entry, with subItem copied up and baseEntry details copied over
+                        // Copy item, not ref
+                        // NOTE - cast is any is to avoid TS error about es2017. Object.assign is being polyfilled through build step
+                        let comboItem = (Object as any).assign({},entryBase);
+                        comboItem['subItem'] = subItem;
+                        flattenedEntries.push(comboItem);
+                    }
+                }
+                else {
+                    flattenedEntries.push(entryBase);
+                }
+            }
+            // Make sure to update entryArr, which will be further mapped below
+            entryArr = flattenedEntries;
+        }
+    }
+
 
     let suppressedRowCount:number = 0;
 
     // Loop over response entries - [ROWS]
-    for (let x=0; x<response.data.length; x++){
+    for (let x=0; x<entryArr.length; x++){
         // Flag - suppress row being passed to GDS
         let suppressRow:boolean = false;
 
-        let entry = response.data[x];
+        let entry = entryArr[x];
         let row: DataReturnObjRow = {
             values: []
         }
 
-        // lets do some pre-processing
+        // lets do some pre-processing, per entry
         if (responseType === usedTogglResponseTypes.TogglDetailedReportResponse){
             // No special pre-processing required
         }

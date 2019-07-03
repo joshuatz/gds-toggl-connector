@@ -19,6 +19,7 @@
     "author": "Joshua Tzucker",
     "dependencies": {
         "@types/google-apps-script": "0.0.51",
+        "es6-object-assign": "^1.1.0",
         "es6-promise": "^4.2.8",
         "typescript": "^3.5.1"
     },

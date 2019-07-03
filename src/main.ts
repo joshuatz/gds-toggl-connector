@@ -100,8 +100,7 @@ const VALUE_FOR_NULL:any = '';
 // init connector
 var cc = DataStudioApp.createCommunityConnector();
 // Create global instance of toggl api class
-var USER_API_TOKEN = getUserApiKey();
-export var togglApiInst = new TogglApi(USER_API_TOKEN);
+export var togglApiInst = new TogglApi(getUserApiKey());
 
 /**
  * @override
@@ -110,13 +109,7 @@ export var togglApiInst = new TogglApi(USER_API_TOKEN);
 function getConfig() {
 	// Get config obj provided by gds-connector
     let config = cc.getConfig();
-
-    // Set config general info
-	config.newInfo()
-        .setId('instructions')
-        .setText('Configure the connector for Toggl');
-
-    // Require workspace ID (necessary for all report API calls)
+    
     // Get list of workspace IDs that the user has access to
     let foundWorkspaces = false;
         try {
@@ -147,18 +140,19 @@ function getConfig() {
             .setPlaceholder('123456');
     }
 
+	// Set config general info
+	config.newInfo()
+		.setId('instructions')
+        .setText('Configure the connector for Toggl');
+    
+    // Require workspace ID (necessary for all report API calls)
+    
+
     // Allow pre-filtering to just billable time
     config.newCheckbox()
         .setId('prefilterBillable')
         .setName('Pre-filter Billable')
         .setHelpText('Pre-filter all reports to just "billable" time (as configured in Toggl)');
-
-    // OPTIONAL: allow users to use a connector instance specific auth/api token, instead of the user-global AUTH that is stored in PropertiesService per user. This is the only way I can see to allow users to connect multiple Toggl accounts within a single Google account login
-    config.newTextInput()
-        .setId('configApiToken')
-        .setName('API Token')
-        .setHelpText('Use this if you need to connect multiple Toggl accounts / logins, within a single Google account. This will override the Authentication flow that you see the first time you connect this source, and allow you to keep a unique account linked per connector. PLEASE DO NOT USE UNLESS ABSOLUTELY NECESSARY - this is less secure than the default authentication setting.')
-        .setPlaceholder('abc123');
 
     // Require date range to be sent with every data request
     config.setDateRangeRequired(true);
@@ -670,10 +664,6 @@ function getData(request:GetDataRequest){
         if (typeof(request.configParams['workspaceId'])!=='undefined'){
             try {
                 workspaceId = parseInt(request.configParams['workspaceId'],10);
-                if (workspaceId < 0){
-                    blocker = true;
-                    blockerReason = 'Workspace ID is invalid.';
-                }
             }
             catch (e){
                 blocker = true;
@@ -685,15 +675,6 @@ function getData(request:GetDataRequest){
             blockerReason = 'Workspace ID is required for all requests!';
         }
         prefilterBillable = request.configParams['prefilterBillable'] == true;
-        let connectorConfigApiToken = request.configParams['configApiToken'];
-        if (typeof(connectorConfigApiToken)==='string' && connectorConfigApiToken.length > 0){
-            // Update api instance to use connector specific API token
-            togglApiInst.setAuthToken(connectorConfigApiToken);
-        }
-        else {
-            // Revert back to global auth token
-            togglApiInst.setAuthToken(USER_API_TOKEN);
-        }
     }
 
     // Early return if anything is missing

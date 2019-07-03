@@ -1,5 +1,3 @@
-import { fieldMapping } from "./main";
-
 /**
  * @author Joshua Tzucker
  * @file helpers.ts
@@ -195,10 +193,6 @@ export class myConsole {
 export function setTimeout(cb:Function,ms:number){
     Utilities.sleep(ms);
     cb();
-}
-
-export function aggregateValues(values:any[],mappings:fieldMapping[]){
-    
 }
 
 export class DateUtils {

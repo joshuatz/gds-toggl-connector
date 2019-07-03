@@ -822,37 +822,23 @@ function mapTogglResponseToGdsFields(
     response.data = Array.isArray(response.data) ? response.data : [];
     let entryArr = response.data;
 
-    // !!! Experimental flag, clean up later
-    const flattenItems:boolean = true;
-    if (flattenItems){
-        if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
-            // Each summary entry also contains a sub-array of entries that are grouped to that summary item. I am going to "flatten" these, so that each entry sub-item becomes its own actual entry, with the duplicated data from the parent entry.
-            // For example, one entry with three sub items would become three entries, with shared common data, but different time_entry data
-            let flattenedEntries = [];
-            for (let x=0; x<entryArr.length; x++){
-                let entryBase = entryArr[x];
-                if (Array.isArray(entryBase['items']) && entryBase.items.length > 0){
-                    let cBillingRate = 0;
-                    let totalBillingSum = 0;
-                    for (let s=0; s<entryBase.items.length; s++){
-                        let subItem = entryBase.items[s];
-                        totalBillingSum += typeof(subItem.sum)==='number' ? subItem.sum : 0;
-                        cBillingRate += typeof(subItem.rate)==='number' ? subItem.rate : 0;
-                        let comboItem = {
-                            subItem: subItem
-                        }
-                        flattenedEntries.push(comboItem);
-                    }
-                    // Add calculated
-                    entryBase['avgBillingRate'] = cBillingRate / entryBase.items.length;
-                    entryBase['totalBillingSum'] = totalBillingSum;
+    if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
+        // Each summary entry also contains a sub-array of entries that are grouped to that summary item. I am going to copy up and reaggregate certain values off that subarray, adding them to the parent entry
+        // For example, one entry with three sub items would stay one entry, but have the averages of those three subitems added as new props
+        for (let x=0; x<entryArr.length; x++){
+            let entryBase = entryArr[x];
+            if (Array.isArray(entryBase['items']) && entryBase.items.length > 0){
+                let cBillingRate = 0;
+                let totalBillingSum = 0;
+                for (let s=0; s<entryBase.items.length; s++){
+                    let subItem = entryBase.items[s];
+                    totalBillingSum += typeof(subItem.sum)==='number' ? subItem.sum : 0;
+                    cBillingRate += typeof(subItem.rate)==='number' ? subItem.rate : 0;
                 }
-                // Remove items array from original, then push back as entry
-                delete entryBase.items;
-                flattenedEntries.push(entryBase);
+                // Add calculated
+                entryBase['avgBillingRate'] = cBillingRate / entryBase.items.length;
+                entryBase['totalBillingSum'] = totalBillingSum;
             }
-            // Make sure to update entryArr, which will be further mapped below
-            entryArr = flattenedEntries;
         }
     }
 

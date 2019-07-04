@@ -259,7 +259,7 @@ let myFields: {[index:string]:fieldMapping} = {
     entryCount: {
         id: 'entryCount',
         name: 'Entry Count',
-        description: 'Sum of all time entries',
+        description: 'Sum of all (unique) time entries',
         formula: 'COUNT_DISTINCT($entryId)',
         semantics: {
             conceptType: 'METRIC',
@@ -310,6 +310,16 @@ let myFields: {[index:string]:fieldMapping} = {
         },
         semantics: {
             conceptType: 'DIMENSION',
+            semanticType: fieldTypeEnum.NUMBER
+        }
+    },
+    projectCount: {
+        id: 'projectCount',
+        name: 'Project Count',
+        description: 'Count of Unique Projects',
+        formula: 'COUNT_DISTINCT($projectId)',
+        semantics: {
+            conceptType: 'METRIC',
             semanticType: fieldTypeEnum.NUMBER
         }
     },

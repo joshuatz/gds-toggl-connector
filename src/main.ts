@@ -395,8 +395,16 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'METRIC',
             semanticType: fieldTypeEnum.DURATION
+        },
+        togglMapping: {
+            fields: {
+                TogglDetailedEntry: ['billableTime'],
+                TogglSummaryEntry: ['totalBillingTime']
+            },
+            formatter: (duration:number)=>{
+                return Converters.togglDurationToGdsDuration(duration);
+            }
         }
-        // @TODO togglMapping
     },
     isBillable: {
         id: 'isBillable',
@@ -405,8 +413,13 @@ let myFields: {[index:string]:fieldMapping} = {
         semantics: {
             conceptType: 'METRIC',
             semanticType: fieldTypeEnum.BOOLEAN
+        },
+        togglMapping: {
+            fields: {
+                TogglDetailedEntry: ['is_billable']
+            },
+            formatter: Converters.forceBoolean
         }
-        // @TODO togglMapping
     },
     billingRate: {
         id: 'billingRate',
@@ -441,9 +454,7 @@ let myFields: {[index:string]:fieldMapping} = {
         },
         semantics: {
             conceptType: 'METRIC',
-            semanticType: fieldTypeEnum.DURATION,
-            isReaggregatable: true,
-            aggregationType: aggregationTypeEnum.SUM
+            semanticType: fieldTypeEnum.DURATION
         }
     },
     // User Info
@@ -834,14 +845,21 @@ function mapTogglResponseToGdsFields(
             if (Array.isArray(entryBase['items']) && entryBase.items.length > 0){
                 let cBillingRate = 0;
                 let totalBillingSum = 0;
+                let totalBillingTime = 0;
                 for (let s=0; s<entryBase.items.length; s++){
                     let subItem = entryBase.items[s];
-                    totalBillingSum += typeof(subItem.sum)==='number' ? subItem.sum : 0;
                     cBillingRate += typeof(subItem.rate)==='number' ? subItem.rate : 0;
+                    let subItemBillingSum = typeof(subItem.sum)==='number' ? subItem.sum : 0;
+                    totalBillingSum += subItemBillingSum;
+                    if (subItemBillingSum > 0){
+                        // Time was billable
+                        totalBillingTime += subItem.time;
+                    }
                 }
                 // Add calculated
                 entryBase['avgBillingRate'] = cBillingRate / entryBase.items.length;
                 entryBase['totalBillingSum'] = totalBillingSum;
+                entryBase['totalBillingTime'] = totalBillingTime;
             }
         }
     }
@@ -861,7 +879,10 @@ function mapTogglResponseToGdsFields(
 
         // lets do some pre-processing, per entry
         if (responseType === usedTogglResponseTypes.TogglDetailedReportResponse){
-            // No special pre-processing required
+            // If billable, copy time amount as new prop
+            if (entry.isBillable===true){
+                entry['billableTime'] = entry.dur;
+            }
         }
         else if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
             // Summary reports can be grouped - and the ID field in response changes to match

@@ -148,6 +148,15 @@ export class Converters {
             return 0.00;
         }
     }
+
+    static forceBoolean(input:any){
+        if (typeof(input)==='boolean'){
+            return input;
+        }
+        else {
+            return false;
+        }
+    }
 }
 
 /**

@@ -8,6 +8,7 @@
         "toggl-types.ts",
         "toggl.ts",
         "main.ts",
+        "fields.ts",
         "auth.ts"
     ],
     "scripts": {

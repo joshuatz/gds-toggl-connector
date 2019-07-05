@@ -1,4 +1,4 @@
 node_modules
-build
+build/*.js
 intermediate
 intermediate-final

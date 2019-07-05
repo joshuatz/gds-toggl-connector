@@ -1,7 +1,3 @@
-import 'google-apps-script';
-import {togglApiInst} from  './main';
-import { TogglApi } from './toggl';
-
 /**
  * @author Joshua Tzucker
  * @file auth.ts
@@ -81,8 +77,4 @@ function setCredentials(request:credentialRequestCb){
     return {
         errorCode : 'NONE'
     };
-}
-
-export {
-    getUserApiKey
 }

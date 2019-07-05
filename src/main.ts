@@ -1,9 +1,3 @@
-import 'google-apps-script';
-import {getUserApiKey} from './auth';
-import { TogglApi, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
-import { Converters, recurseFromString, myConsole, DateUtils, Exceptions, CacheWrapper } from './helpers';
-import { responseTemplate } from './toggl-types';
-
 /**
  * @author Joshua Tzucker
  * @file main.ts
@@ -101,7 +95,7 @@ const VALUE_FOR_NULL:any = '';
 // init connector
 var cc = DataStudioApp.createCommunityConnector();
 // Create global instance of toggl api class
-export var togglApiInst = new TogglApi(getUserApiKey());
+var togglApiInst = new TogglApi(getUserApiKey());
 
 /**
  * @override
@@ -165,7 +159,7 @@ function getConfig() {
 /**
  * To keep things clean and help with type checking, I'm maintaining a list of fields separately from getFields that will be used on both ends - prepping the fields and parsing return data
  */
-export interface fieldMapping {
+interface fieldMapping {
     id: string,
     name: string,
     description?: string,

@@ -3,7 +3,7 @@
  * @file helpers.ts
  */
 
-export function leftPad(input:string,padWith:string,length:number){
+function leftPad(input:string,padWith:string,length:number){
     let output:string = input;
     while (output.length < length){
         output = padWith + output;
@@ -13,13 +13,13 @@ export function leftPad(input:string,padWith:string,length:number){
 
 // Based on https://stackoverflow.com/a/6394168/11447682
 // Returns undefined if can't find it in recursion
-export function recurseFromString(obj:any,dotNotatString:string){
+function recurseFromString(obj:any,dotNotatString:string){
 	return dotNotatString.split('.').reduce(function(obj,i){
         return typeof(obj)==='object' ? obj[i] : undefined;
     },obj);
 }
 
-export class Converters {
+class Converters {
     static getQuarterFromMonth(month:number){
         if (month <= 3){
             return 1;
@@ -162,7 +162,7 @@ export class Converters {
 /**
  * Logging
  */
-export class myConsole {
+class myConsole {
     static formatThingForConsole(thing:any){
         let result:any = thing;
         if (typeof(thing)==='object'){
@@ -199,12 +199,12 @@ export class myConsole {
  * Polyfill setTimeout
  * !!! - DO NOT REMOVE - GLOBAL FUNC - !!!
  */
-export function setTimeout(cb:Function,ms:number){
+function setTimeout(cb:Function,ms:number){
     Utilities.sleep(ms);
     cb();
 }
 
-export class DateUtils {
+class DateUtils {
     static getIsDateInDateTimeRange(dateTimeToCheck:Date,startDateTime:Date,endDateTime:Date){
         return dateTimeToCheck >= startDateTime && dateTimeToCheck <= endDateTime;
     }
@@ -231,7 +231,7 @@ export class DateUtils {
     }
 }
 
-export class Exceptions {
+class Exceptions {
     static throwGenericApiErr(){
         cc.newUserError()
             .setDebugText('Something wrong with result from API')
@@ -241,7 +241,7 @@ export class Exceptions {
     }
 }
 
-export class CacheWrapper {
+class CacheWrapper {
     /**
      * Generates a key of pipe-separated values - should look like "123|{'user':'joshua'}|ABC"
      * @param inputs Array of anything to use for composite key
@@ -263,7 +263,7 @@ export class CacheWrapper {
     }
 }
 
-export function myStringifer(input:any){
+function myStringifer(input:any){
     let result:string = '';
     if (typeof(input)==='object'){
         result = JSON.stringify(input);

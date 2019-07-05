@@ -1,8 +1,3 @@
-import 'google-apps-script';
-import './helpers';
-import { Converters, myConsole } from './helpers';
-import { responseTemplate, TogglDetailedReportRequestParams, TogglSummaryReportRequestParams, TogglWeeklyReportRequestParams } from './toggl-types';
-
 /**
  * @author Joshua Tzucker
  * @file toggl.ts
@@ -11,19 +6,19 @@ import { responseTemplate, TogglDetailedReportRequestParams, TogglSummaryReportR
 // Handy aliases
 type httpResponse = GoogleAppsScript.URL_Fetch.HTTPResponse;
 
-export enum usedTogglResponseTypes {
+enum usedTogglResponseTypes {
     TogglDetailedReportResponse,
     TogglWeeklyReportResponse,
     TogglSummaryReportResponse
 }
-export enum usedToggleResponseEntriesTypes {
+enum usedToggleResponseEntriesTypes {
     TogglDetailedEntry,
     TogglWeeklyProjectGroupedEntry,
     TogglWeeklyUserGroupedEntry,
     TogglSummaryEntry
 }
 
-export class TogglApi {
+class TogglApi {
     private _authToken: string;
     private _userAgent: string;
     private readonly _userApiBase: string = 'https://www.toggl.com/api/v8';

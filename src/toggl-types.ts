@@ -3,7 +3,7 @@
 /**
  * Request interfaces
  */
-export interface TogglReportRequestParams {
+interface TogglReportRequestParams {
     [index: string] : any,
     user_agent: string,
     workspace_id: number,
@@ -26,13 +26,13 @@ export interface TogglReportRequestParams {
 }
 
 // https://github.com/toggl/toggl_api_docs/blob/master/reports/detailed.md
-export interface TogglDetailedReportRequestParams extends TogglReportRequestParams {
+interface TogglDetailedReportRequestParams extends TogglReportRequestParams {
     order_fields?: "date"|"description"|"duration"|"user",
     page: number
 }
 
 // https://github.com/toggl/toggl_api_docs/blob/master/reports/summary.md
-export interface TogglSummaryReportRequestParams extends TogglReportRequestParams {
+interface TogglSummaryReportRequestParams extends TogglReportRequestParams {
     order_fields?: "title"|"duration"|"amount"
     grouping?: "projects"|"clients"|"users"
     subgrouping?: "time_entries"|"tasks"|"projects"|"users",
@@ -41,7 +41,7 @@ export interface TogglSummaryReportRequestParams extends TogglReportRequestParam
 }
 
 // https://github.com/toggl/toggl_api_docs/blob/master/reports/weekly.md
-export interface TogglWeeklyReportRequestParams extends TogglReportRequestParams {
+interface TogglWeeklyReportRequestParams extends TogglReportRequestParams {
     order_field?: "title"|"day1"|"day2"|"day3"|"day4"|"day5"|"day6"|"day7"|"week_total"
     grouping?: "projects"|"users",
     calculate?: "time"|"earnings",
@@ -52,13 +52,13 @@ export interface TogglWeeklyReportRequestParams extends TogglReportRequestParams
  */
 
  // Wrapper interface
-export interface responseTemplate {
+interface responseTemplate {
     success:boolean;
     raw: {
         [index:string]: any;
     };
 }
-export interface TogglStandardReportResponse {
+interface TogglStandardReportResponse {
     total_grand: number|null,
     total_billable: number|null,
     total_currencies: null|[{
@@ -67,7 +67,7 @@ export interface TogglStandardReportResponse {
     }];
 }
 
-export interface TogglDetailedEntry {
+interface TogglDetailedEntry {
     [index:string] : any,
     id: number,
     pid: null|number,
@@ -90,14 +90,14 @@ export interface TogglDetailedEntry {
     cur: null|string,
     tags: Array<string>
 }
-export interface TogglDetailedReportResponse extends TogglStandardReportResponse {
+interface TogglDetailedReportResponse extends TogglStandardReportResponse {
     data: Array<TogglDetailedEntry>
 }
 
 /**
  * Entry summary belong to a specific project. Returned by requests that request grouping by report
  */
-export interface TogglWeeklyProjectGroupedEntry {
+interface TogglWeeklyProjectGroupedEntry {
     title : {
         client: null|string,
         project: null|string,
@@ -115,7 +115,7 @@ export interface TogglWeeklyProjectGroupedEntry {
     }>
 }
 
-export interface TogglWeeklyUserGroupedEntry {
+interface TogglWeeklyUserGroupedEntry {
     title : {
         user: string
     },
@@ -133,11 +133,11 @@ export interface TogglWeeklyUserGroupedEntry {
     }>
 }
 
-export interface TogglWeeklyReportResponse extends TogglStandardReportResponse {
+interface TogglWeeklyReportResponse extends TogglStandardReportResponse {
     data: Array<TogglWeeklyProjectGroupedEntry|TogglWeeklyUserGroupedEntry>
 }
 
-export interface TogglSummaryEntry {
+interface TogglSummaryEntry {
     [index: string] : any,
     id: null|number,
     title: {
@@ -167,6 +167,6 @@ export interface TogglSummaryEntry {
     }>
 }
 
-export interface TogglSummaryReportResponse extends TogglStandardReportResponse {
+interface TogglSummaryReportResponse extends TogglStandardReportResponse {
     data: Array<TogglSummaryEntry>
 }

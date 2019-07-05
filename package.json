@@ -3,18 +3,10 @@
     "version": "0.0.1",
     "description": "Toggl Connector for Google Data Studio",
     "main": "main.ts",
-    "fileOrder": [
-        "helpers.ts",
-        "toggl-types.ts",
-        "toggl.ts",
-        "main.ts",
-        "auth.ts"
-    ],
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "prep-ts": "node prep-ts.js",
         "run-tsc": "tsc",
-        "build": "npm run prep-ts && npm run run-tsc && node add-polyfills.js"
+        "build": "npm run run-tsc && node add-polyfills.js"
     },
     "author": "Joshua Tzucker",
     "dependencies": {

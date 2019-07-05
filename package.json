@@ -15,7 +15,8 @@
         "prep-ts": "node prep-ts.js",
         "run-tsc": "tsc",
         "prep-build" : "node prep-build-dir.js",
-        "build": "npm run prep-build && prep-ts && npm run run-tsc && node add-polyfills.js"
+        "build": "npm run prep-build && npm run prep-ts && npm run run-tsc && node add-polyfills.js",
+        "build-push" : "npm run build && cd build && clasp push"
     },
     "author": "Joshua Tzucker",
     "dependencies": {

@@ -24,6 +24,8 @@ You might have noticed that I wrote this using TypeScript. At the moment, I'm no
 
 Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export statements) -> Formatter (prep-ts.js) (Concatenation of multiple TS files into single TS intermediate file) -> TSC (TypeScript Compiler) (with single TS intermediate file as input) -> Polyfill adder (add-polyfill.js) (Inlines any polyfill files, such as es6-promises, into top of TSC single output JS file).
 
+Clasp has been setup in the final /build folder, so it will push the final transpiled JS. "npm run build-push" will execute this entire workflow.
+
 ## TODO List
  - High Priority
      - Resolve possible timezone issues
@@ -36,8 +38,6 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
      - Better way of invalidating cache (global cache keys?)
      - Try to refactor getData() into more split out functions
      - Currency converters?
- - Optional:
-     - Setup clasp, but only with final output JS file (should be pretty easy to setup)
 
 ## Atrribution
  - Logo

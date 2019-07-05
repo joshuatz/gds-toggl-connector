@@ -1,0 +1,19 @@
+/* This TS Config won't actually get used - just need to have it with src TS files to satisify vscode intellisense - https://github.com/Microsoft/vscode/issues/66008 */
+
+{
+    "compilerOptions": {
+      /* Basic Options */
+      "target": "es3",
+      "module": "amd",
+      "lib": ["es5","es2015.promise","es2015.iterable"],                             /* Specify library files to be included in the compilation. */
+      "allowJs": false,
+  
+      /* Strict Type-Checking Options */
+      "strict": true,
+  
+      /* Module Resolution Options */
+      "moduleResolution": "node",
+      // "types": [],
+      "esModuleInterop": true
+    }
+  }  

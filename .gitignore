@@ -3,3 +3,4 @@ build/*.js
 build/appsscript.json
 intermediate
 intermediate-final
+src/*.js

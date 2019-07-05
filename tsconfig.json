@@ -7,6 +7,9 @@
     "allowJs": false,
     "outDir": "./build/",
     "rootDir": "./src",
+    "types": [
+        "@types/google-apps-script"
+    ],
 
     /* Strict Type-Checking Options */
     "strict": true,

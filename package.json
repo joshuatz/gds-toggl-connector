@@ -6,7 +6,8 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "run-tsc": "tsc",
-        "build": "npm run run-tsc && node add-polyfills.js"
+        "prep-build" : "node prep-build-dir.js",
+        "build": "npm run prep-build && npm run run-tsc && node add-polyfills.js"
     },
     "author": "Joshua Tzucker",
     "dependencies": {
@@ -16,6 +17,7 @@
         "typescript": "^3.5.1"
     },
     "devDependencies": {
+        "@google/clasp": "^2.2.0",
         "concat": "^1.0.3",
         "fs-extra": "^8.0.1",
         "replace-in-file": "^4.1.0"

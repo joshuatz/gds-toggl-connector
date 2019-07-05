@@ -962,7 +962,7 @@ function mapTogglResponseToGdsFields(
  * @param entryTypeStringIndex {string} - Toggl entry type enum, converted to string
  * @return {any} - always returns a value, with VALUE_FOR_NULL global being the placeholder if no mapping was found. GDS always expects a value in column
  */
-function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMapping:fieldMapping,entryTypeStringIndex:string){
+function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMapping:fieldMapping,entryTypeStringIndex:string): any{
     let extractedValue:any = VALUE_FOR_NULL;
     let togglMapping = fieldMapping.togglMapping;
     if (togglMapping){
@@ -1019,8 +1019,11 @@ function testDateString(){
 
 /**
  * Check if a given field can be found in the interface for the given response entry type (from the API)
+ * @param fieldId {string} - The ID of a field to check
+ * @param entryTypeStringIndex {string} - The string representation of a Toggl entry type (should correspond to usedToggleResponseEntriesTypes enum)
+ * @returns {boolean}
  */
-function getIsFieldInResponseEntryType(fieldId:string,entryTypeStringIndex:string){
+function getIsFieldInResponseEntryType(fieldId:string,entryTypeStringIndex:string): boolean{
     let fieldMapping = myFields[fieldId].togglMapping;
     if (fieldMapping){
         return Array.isArray(fieldMapping.fields[entryTypeStringIndex]);

@@ -19,6 +19,9 @@ export function recurseFromString(obj:any,dotNotatString:string){
     },obj);
 }
 
+/**
+ * Wrapper around various converter methods
+ */
 export class Converters {
     static getQuarterFromMonth(month:number){
         if (month <= 3){
@@ -57,8 +60,9 @@ export class Converters {
     /**
      * Converts a date or date like string into the "2019-06-25" format for Toggl endpoints
      * @param date - Input date obj, or string, to format
+     * @returns {string}
      */
-    static formatDateForTogglApi(date:Date|string){
+    static formatDateForTogglApi(date:Date|string):string {
         try {
             let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : date;
             let dateParts = Converters.getDateParts(dateToFormat);
@@ -71,7 +75,7 @@ export class Converters {
     }
 
     // https://stackoverflow.com/a/6117889
-    static getWeekNumber(input:Date){
+    static getWeekNumber(input:Date): number{
         let d = new Date(input.getTime());
         let dayNum = d.getUTCDay() || 7;
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -79,7 +83,14 @@ export class Converters {
         return Math.ceil((((+d - +yearStart) / 86400000) + 1)/7);
     }
 
-    static formatDateForGds(date:Date|string,gdsDateType:GoogleAppsScript.Data_Studio.FieldType){
+    /**
+     * Formats any given date (or parseable date string) into a GDS formatted date
+     * See: https://developers.google.com/datastudio/connector/reference#semantictype
+     * @param date {Date|string} - Date to format
+     * @param gdsDateType - A GDS fieldtype enum value that corresponds to a GDS DATETIME format
+     * @returns {string}
+     */
+    static formatDateForGds(date:Date|string,gdsDateType:GoogleAppsScript.Data_Studio.FieldType): string {
         let fieldTypes = DataStudioApp.createCommunityConnector().FieldType;
         try {
             let dateToFormat:Date = typeof(date)==='string' ? (new Date(date)) : new Date(date.getTime());
@@ -116,11 +127,21 @@ export class Converters {
         }
     }
 
-    static togglDurationToGdsDuration(togglDurationMs:number){
+    /**
+     * This method is really just to remind me that the conversion is necessary; Toggl returns MS, GDS expects seconds. (and as string)
+     * @param togglDurationMs {number} - The duration returned directly from a Toggl API endpoint (should be in MS)
+     * @returns {string}
+     */
+    static togglDurationToGdsDuration(togglDurationMs:number): string{
         return (togglDurationMs/1000).toString();
     }
 
-    static gdsDateRangeDateToDay(gdsDashedDate:string){
+    /**
+     * Converts the date strings that GDS passes in requests, such as getData(), into true Date object
+     * @param gdsDashedDate - The date passed by GDS (usually in getData())
+     * @return {Date}
+     */
+    static gdsDateRangeDateToDay(gdsDashedDate:string): Date{
         // GDS date range start & end are in format "2019-06-28"
         let pattern:RegExp = /(\d{4})-(\d{2})-(\d{2})/;
         let match:RegExpMatchArray|null = pattern.exec(gdsDashedDate);
@@ -135,7 +156,12 @@ export class Converters {
         }   
     }
 
-    static formatCurrencyForGds(amount:null|number|string){
+    /**
+     * Ensures that a {number} is always passed to GDS for a currency field.
+     * @param amount - the amount of money to format into a GDS formatted amount
+     * @return {number}
+     */
+    static formatCurrencyForGds(amount:undefined|null|number|string){
         if (amount){
             if (typeof(amount)==='string'){
                 return parseFloat(amount);
@@ -163,6 +189,10 @@ export class Converters {
  * Logging
  */
 export class myConsole {
+    /**
+     * Formats any given input into a suitable format for StackDriver logging (e.g. wrapping in object)
+     * @param thing - Thing you show in the Stackdriver log
+     */
     static formatThingForConsole(thing:any){
         let result:any = thing;
         if (typeof(thing)==='object'){
@@ -204,6 +234,9 @@ export function setTimeout(cb:Function,ms:number){
     cb();
 }
 
+/**
+ * Wrapper class around a bunch of date methods. Probably should have just import moment.js instead of hand coding ¯\_(ツ)_/¯
+ */
 export class DateUtils {
     static getIsDateInDateTimeRange(dateTimeToCheck:Date,startDateTime:Date,endDateTime:Date){
         return dateTimeToCheck >= startDateTime && dateTimeToCheck <= endDateTime;
@@ -231,6 +264,9 @@ export class DateUtils {
     }
 }
 
+/**
+ * Wrapper around some generic exceptions
+ */
 export class Exceptions {
     static throwGenericApiErr(){
         cc.newUserError()
@@ -241,6 +277,9 @@ export class Exceptions {
     }
 }
 
+/**
+ * Wrapper around using the GoogleAppsScript.Cache
+ */
 export class CacheWrapper {
     /**
      * Generates a key of pipe-separated values - should look like "123|{'user':'joshua'}|ABC"
@@ -257,12 +296,21 @@ export class CacheWrapper {
         return key;
     }
 
+    /**
+     * Check if the cache contains a value for a set of inputs
+     * @param cache - An instance of the GAS Cache
+     * @param inputs - An array of parameters that can be combined to form a composite storage key
+     */
     static queryCacheForInputs(cache:GoogleAppsScript.Cache.Cache,inputs:any[]){
         let key:string = CacheWrapper.generateKeyFromInputs(inputs);
         return cache.get(key);
     }
 }
 
+/**
+ * Helper function to stringify {any}
+ * @param input - Anything to stringify
+ */
 export function myStringifer(input:any){
     let result:string = '';
     if (typeof(input)==='object'){

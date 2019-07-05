@@ -1,4 +1,8 @@
-// Some toggl interfaces
+/**
+ * @author Joshua Tzucker
+ * @file toggl-types.ts - Some common interfaces for Toggl API - requests and responses
+ * Should correlate with https://github.com/toggl/toggl_api_docs
+ */
 
 /**
  * Request interfaces

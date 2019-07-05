@@ -15,7 +15,6 @@ import { fieldMapping, myFields } from './fields';
  *      - I could always return USD, and leave it up to user to know what their Toggl setting is and convert on their own...
  *      - I have to tell GDS the currency in advance, so if I wanted it to be dynamic based on Toggl setting, I would have to make double API calls...
  *      - Messy but reliable option: make a field for every single currency Toggl might return, and then map based on response
- * @TODO - Implement caching
  * @TODO - handle "alltime" query?
  */
 

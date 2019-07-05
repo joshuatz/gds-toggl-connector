@@ -11,6 +11,11 @@ for (let x=0; x<fileList.length; x++){
     }
 }
 
-// Copy the appsscript json file from root to build, over-writing if necessary
+// Copy the appsscript json file from root to build, but don't overwrite in case there is already a diff GAS ID there for testing
 const metaFileName = 'appsscript.json';
-fsExtra.copyFileSync(metaFileName,buildDir + '/' + metaFileName);
+if (!fsExtra.existsSync(buildDir + '/' + metaFileName)){
+    fsExtra.copyFileSync(metaFileName,buildDir + '/' + metaFileName,fsExtra.constants.COPYFILE_EXCL);
+}
+else {
+    console.warn('appsscript.json was not copied from root to build. Already exists in build.');
+}

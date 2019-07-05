@@ -28,6 +28,8 @@ export class TogglApi {
     private _userAgent: string;
     private readonly _userApiBase: string = 'https://www.toggl.com/api/v8';
     private readonly _reportApiBase: string = 'https://toggl.com/reports/api/v2';
+    // From docs: Limits will and can change during time, but a safe window will be 1 request per second.
+    private readonly _stepOffDelay: number = 1100;
     
     constructor(authToken:string|null='',userAgent:string|null=APP_USER_AGENT){
         this._authToken = (authToken || '');
@@ -53,10 +55,12 @@ export class TogglApi {
         }
     }
     static delaySync(ms:number){
-        // This should be blocking/sync by default
+        // This should be blocking/sync by default - no need to wrap in promise or callback
         Utilities.sleep(ms);
     }
-
+    /**
+     * Assemble the headers object for use with UrlFetchApp
+     */
     private _getAuthHeaders(){
         return {
             "headers": <object> {
@@ -73,7 +77,7 @@ export class TogglApi {
             return TogglApi.parseJsonResponse(apiResponse);
         }
         catch (e){
-            Logger.log(e);
+            myConsole.error(e);
             return TogglApi.getResponseTemplate(false);
         }
     }
@@ -85,7 +89,6 @@ export class TogglApi {
         let done = false;
         try {
             let startResult = this.getDetailedReport(workspaceId,since,until,currPage,filterToBillable);
-            //myConsole.log(startResult);
             // Need to check for pagination...
             if (startResult.success && startResult.raw['per_page'] && startResult.raw['total_count']){
                 let numPerPage:number = startResult.raw['per_page'];
@@ -98,7 +101,7 @@ export class TogglApi {
                     let finalResult = startResult;
                     myConsole.log('getDetailsReportAllPages - starting pagination');
                     while (!done){
-                        TogglApi.delaySync(1000);
+                        TogglApi.delaySync(this._stepOffDelay);
                         currPage++;
                         myConsole.log('Current Page = ' + currPage);
                         let currResult = this.getDetailedReport(workspaceId,since,until,currPage,filterToBillable);
@@ -118,7 +121,7 @@ export class TogglApi {
                 }
                 else {
                     done = true;
-                    myConsole.log({'message':'Detailed Report - only single page of results'});
+                    myConsole.log('Detailed Report - only single page of results');
                     return startResult;
                 }
             }
@@ -129,7 +132,7 @@ export class TogglApi {
             }
         }
         catch (e){
-            myConsole.log(e);
+            myConsole.error(e);
             throw(e);
         }
     }
@@ -212,7 +215,12 @@ export class TogglApi {
     setAuthToken(authToken:string){
         this._authToken = authToken;
     }
-    static checkResponseValid(response: httpResponse){
+    /**
+     * Tries to determine if a HTTP response is valid, and if not, determine why (auth vs rate limit)
+     * @param response {GoogleAppsScript.URL_Fetch.HTTPResponse} - A response from UrlFetchApp
+     * @returns {{[index:string]:any}}
+     */
+    static checkResponseValid(response: httpResponse): {[index:string]:any}{
         let validResponse: boolean = true;
         let validAuth: boolean = true;
         let rateLimited: boolean = false;

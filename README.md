@@ -1,11 +1,11 @@
 # gds-toggl-connector
 # Work in progress, probably about 80% done.
 ## Unofficial Google Data Studio connector for Toggl Timer
+![Demo](demo.gif "Demo")
+## Project page
+[https://joshuatz.com/projects/marketing/google-data-studio-toggl-time-tracker-connector](https://joshuatz.com/projects/marketing/google-data-studio-toggl-time-tracker-connector)
 
-@TODO Add image demos here
-
-@TODO Add link to full project post here
-
+## What is this?
 This is a custom Google Data Studio connector to pull in time entries and summary information from [Toggl](https://toggl.com/), the online time tracking software.
 
 ## Installation process for users
@@ -16,6 +16,7 @@ Users must provide just a few details when setting up the connector for the firs
      - User's API token is required. It can be obtained at the bottom of [https://toggl.com/app/profile](https://toggl.com/app/profile).
  - General configuration
      - Workspace: This is a space that a user belongs to in Toggl, that is used to separate accounts into logical "workspaces".
+         - As long as the authentication step succeeded, you should be able to pick which workspace you want to pull data from by selecting it from the dropdown in the connector config section
      - Pre-filter billable: All data return by the connector will only be for billable entries, as opposed to both billable and non-billable. The benefit to the user would be that if they only care about billable time, they want have to keep adding filters to all their reports/widgets to keep non-billable time out.
 
 ## Build Process
@@ -25,8 +26,6 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
 
 ## TODO List
  - High Priority
-     - Finish filling out appsscript.json
-         - Add report template
      - Resolve possible timezone issues
      - Get connector officially published / distributed ?
          - [Options](https://developers.google.com/datastudio/connector/publish-connector)

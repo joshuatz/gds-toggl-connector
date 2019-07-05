@@ -11,14 +11,12 @@
         "sources": [
             "TOGGL"
         ],
-        "templates": {
-            "default": ""
-        },
         "authType": ["KEY"],
         "feeType": ["FREE"]
     },
     "urlFetchWhitelist" : [
-        "https://www.toggl.com"
+        "https://www.toggl.com/",
+        "https://toggl.com/"
     ],
     "exceptionLogging": "STACKDRIVER"
 }

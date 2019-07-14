@@ -1,3 +1,5 @@
+import { debugLevels, DEBUG_LEVEL } from "./main";
+
 /**
  * @author Joshua Tzucker
  * @file helpers.ts
@@ -217,11 +219,15 @@ export class myConsole {
         }
         return result;
     }
-    static log(thing:any){
-        console.log(myConsole.formatThingForConsole(thing))
+    static log(thing:any,level:debugLevels=debugLevels.LOW){
+        if (DEBUG_LEVEL >= level){
+            console.log(myConsole.formatThingForConsole(thing))
+        }
     }
-    static error(thing:any){
-        console.error(myConsole.formatThingForConsole(thing));
+    static error(thing:any,level:debugLevels=debugLevels.LOW){
+        if (DEBUG_LEVEL >= level){
+            console.error(myConsole.formatThingForConsole(thing));
+        }
     }
 }
 

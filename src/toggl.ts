@@ -2,6 +2,7 @@ import 'google-apps-script';
 import './helpers';
 import { Converters, myConsole } from './helpers';
 import { responseTemplate, TogglDetailedReportRequestParams, TogglSummaryReportRequestParams, TogglWeeklyReportRequestParams } from './toggl-types';
+import { debugLevels } from './main';
 
 /**
  * @author Joshua Tzucker
@@ -77,14 +78,13 @@ export class TogglApi {
             return TogglApi.parseJsonResponse(apiResponse);
         }
         catch (e){
-            myConsole.error(e);
+            myConsole.error(e,debugLevels.LOW);
             return TogglApi.getResponseTemplate(false);
         }
     }
     getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,filterToBillable?:boolean,startPage?:number){
         filterToBillable = typeof(filterToBillable)==='boolean' ? filterToBillable : false;
         // @TODO limit number of pages requested? Return userError if exceeded?
-        myConsole.log('starting getDetailsReportAllPages');
         let currPage = (startPage || 1);
         let done = false;
         try {
@@ -99,11 +99,11 @@ export class TogglApi {
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice
                     let finalResult = startResult;
-                    myConsole.log('getDetailsReportAllPages - starting pagination');
+                    myConsole.log('getDetailsReportAllPages - starting pagination',debugLevels.HIGH);
                     while (!done){
                         TogglApi.delaySync(this._stepOffDelay);
                         currPage++;
-                        myConsole.log('Current Page = ' + currPage);
+                        myConsole.log('Current Page = ' + currPage,debugLevels.HIGH);
                         let currResult = this.getDetailedReport(workspaceId,since,until,currPage,filterToBillable);
                         if (currResult.success && Array.isArray(currResult.raw['data'])){
                             fetchedNum = numPerPage * currPage;
@@ -121,18 +121,17 @@ export class TogglApi {
                 }
                 else {
                     done = true;
-                    myConsole.log('Detailed Report - only single page of results');
+                    myConsole.log('Detailed Report - only single page of results',debugLevels.HIGH);
                     return startResult;
                 }
             }
             else {
                 done = true;
-                myConsole.log('API did not return paging results');
                 return startResult;
             }
         }
         catch (e){
-            myConsole.error(e);
+            myConsole.error(e,debugLevels.LOW);
             throw(e);
         }
     }
@@ -150,15 +149,13 @@ export class TogglApi {
         }
         let url:string = this._reportApiBase + TogglApi.endpoints.reports.detailed;
         url = TogglApi.requestParamsToQueryString(requestParams,url);
-        myConsole.log(url);
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
-            // @TODO refactor to use typed results (:TogglDetailedReportResponse)
             let result = TogglApi.parseJsonResponse(apiResponse);
             return result;
         }
         catch (e){
-            myConsole.error(e);
+            myConsole.error(e,debugLevels.LOW);
             throw(e);
         }
     }
@@ -183,14 +180,13 @@ export class TogglApi {
         }
         let url:string = this._reportApiBase + TogglApi.endpoints.reports.summary;
         url = TogglApi.requestParamsToQueryString(requestParams,url);
-        myConsole.log(url);
         try {
             let apiResponse: GoogleAppsScript.URL_Fetch.HTTPResponse = UrlFetchApp.fetch(url,this._getAuthHeaders());
             let result = TogglApi.parseJsonResponse(apiResponse);
             return result;
         }
         catch (e){
-            myConsole.error(e);
+            myConsole.error(e,debugLevels.LOW);
             throw(e);
         }
     }
@@ -205,7 +201,7 @@ export class TogglApi {
             return result;
         }
         catch (e){
-            myConsole.error(e);
+            myConsole.error(e,debugLevels.LOW);
             throw(e);
         }
     }

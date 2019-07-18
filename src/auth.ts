@@ -1,4 +1,3 @@
-import 'google-apps-script';
 import {togglApiInst} from  './main';
 import { TogglApi } from './toggl';
 

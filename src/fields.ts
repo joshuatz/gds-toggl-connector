@@ -1,5 +1,6 @@
-import { fieldTypeEnum, aggregationTypeEnum } from "./main";
-import { Converters } from "./helpers";
+import {aggregationTypeEnum } from './gds-types';
+import { Converters } from './helpers';
+import {fieldTypeEnum} from './gds-types';
 
 /**
  * To keep things clean and help with type checking, I'm maintaining a list of fields separately from getFields that will be used on both ends - prepping the fields and parsing return data

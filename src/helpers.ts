@@ -1,4 +1,4 @@
-import { debugLevels, DEBUG_LEVEL } from "./main";
+import { debugLevels, DEBUG_LEVEL } from './setup';
 
 /**
  * @author Joshua Tzucker

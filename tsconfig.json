@@ -8,7 +8,8 @@
       "outFile": "./build/main.js",
       "rootDir": "./intermediate-final",
       "types": [
-          "@types/google-apps-script"
+          "@types/google-apps-script",
+          "@types/jest"
       ],
   
       /* Strict Type-Checking Options */

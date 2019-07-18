@@ -89,10 +89,16 @@ interface DataStudioFieldBuilt {
 /**
  * Some app-wide constants
  */
+export const enum debugLevels {
+    OFF = 0,
+    LOW,
+    MEDIUM,
+    HIGH
+}
+export const DEBUG_LEVEL:debugLevels = debugLevels.MEDIUM;
 const AUTH_HELP_URL:string = 'https://toggl.com/app/profile';
 // Lookup key under which user-supplied API key is stored in PropertiesService.getUserProperties
 const APIKEY_STORAGE:string = 'dscc.key';
-const IS_DEBUG:boolean = true;
 const APP_USER_AGENT:string = 'https://github.com/joshuatz/gds-toggl-connector'
 const VALUE_FOR_NULL:any = '';
 
@@ -252,7 +258,7 @@ function getSchema(request:SchemaRequest) {
  *   - Rows is also confusing - instead of each column (dimension|metric) being an object with a values array that contains rows, it is that each row is an object with a values array that contains columns.
  */
 function getData(request:GetDataRequest){
-    myConsole.log(request);
+    myConsole.log(request,debugLevels.MEDIUM);
 
     let now:Date = new Date();
     let userCache:GoogleAppsScript.Cache.Cache = CacheService.getUserCache();
@@ -353,7 +359,7 @@ function getData(request:GetDataRequest){
                     if (cacheValue){
                         res = JSON.parse(cacheValue);
                         foundInCache = true;
-                        myConsole.log('Used Cache!');
+                        myConsole.log('Used Cache!',debugLevels.HIGH);
                     }
                 }
                 catch (e){
@@ -362,7 +368,7 @@ function getData(request:GetDataRequest){
             }
             if (!foundInCache){
                 res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable);
-                myConsole.log('No cache used for response');
+                myConsole.log('No cache used for response',debugLevels.HIGH);
             }
             if (res.success){
                 
@@ -386,7 +392,7 @@ function getData(request:GetDataRequest){
                 .throwException();
         }
         else if (dateDimensionRequired || canUseDetailedReport){
-            myConsole.log('dateDimensionRequired');
+            myConsole.log('dateDimensionRequired',debugLevels.HIGH);
             // The only request type that a date dimension is the detailed report
             let res:responseTemplate = TogglApi.getResponseTemplate(false);
             let cacheKey:string = CacheWrapper.generateKeyFromInputs([workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable]);
@@ -396,7 +402,7 @@ function getData(request:GetDataRequest){
                     if (cacheValue){
                         res = JSON.parse(cacheValue);
                         foundInCache = true;
-                        myConsole.log('Used Cache!');
+                        myConsole.log('Used Cache!',debugLevels.HIGH);
                     }
                 }
                 catch (e){
@@ -405,9 +411,8 @@ function getData(request:GetDataRequest){
             }
             if (!foundInCache){
                 res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable);
-                myConsole.log('No cache used for response');
+                myConsole.log('No cache used for response',debugLevels.HIGH);
             }
-            myConsole.log(res);
             if (res.success){
                 // Map to getData rows
                 returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
@@ -416,7 +421,7 @@ function getData(request:GetDataRequest){
                     userCache.put(cacheKey,JSON.stringify(res));
                 }
                 returnData.cachedData = foundInCache;
-                myConsole.log(returnData);
+                myConsole.log(returnData,debugLevels.HIGH);
                 return returnData;
             }
             else {
@@ -428,7 +433,7 @@ function getData(request:GetDataRequest){
                 .setDebugText('No API call was made, could not determine endpoint based on dimensions requested')
                 .setText('Invalid combination of dimensions')
                 .throwException();
-            myConsole.error('No API call was made, could not determine endpoint based on dimensions requested');
+            myConsole.error('No API call was made, could not determine endpoint based on dimensions requested',debugLevels.LOW);
         }
     }
     catch (err){
@@ -436,16 +441,17 @@ function getData(request:GetDataRequest){
             .setDebugText(err.toString())
             .setText('Something went wrong fetching from Toggl')
             .throwException();
-        myConsole.error(err);
+        myConsole.error(err,debugLevels.LOW);
     }
 }
 
 /**
  * @override
- * @TODO - right now simply used to suppress errors that this func should exist
  */
 function isAdminUser(){
-    return false;
+    // No spam please :)
+    let email:string = 'am9zaHVhLnR6QGdtYWlsLmNvbQ==';
+    return Utilities.base64EncodeWebSafe(Session.getEffectiveUser().getEmail(),Utilities.Charset.UTF_8) === email;
 }
 
 /**
@@ -586,7 +592,7 @@ function mapTogglResponseToGdsFields(
     }
 
     if (suppressedRowCount > 0){
-        myConsole.log('Suppressed ' + suppressedRowCount.toString() + ' rows based on misaligned date');
+        myConsole.log('Suppressed ' + suppressedRowCount.toString() + ' rows based on misaligned date',debugLevels.HIGH);
     }
 
     return mappedData;
@@ -604,7 +610,6 @@ function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMappin
     let togglMapping = fieldMapping.togglMapping;
     if (togglMapping){
         // Look up the individual field mappings
-        // myConsole.log(entryTypeStringIndex);
         let fields = togglMapping.fields[entryTypeStringIndex];
         if (fields){
             // Iterate over field keys

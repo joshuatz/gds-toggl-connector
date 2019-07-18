@@ -5,7 +5,7 @@
         "company": "Joshua Tzucker",
         "companyUrl": "https://joshuatz.com/?utm_source=gds&utm_medium=companyUrl",
         "addonUrl": "https://joshuatz.com/projects/marketing/google-data-studio-toggl-time-tracker-connector?utm_source=gds&utm_medium=addonUrl",
-        "supportUrl": "https://joshuatz.com/projects/marketing/google-data-studio-toggl-time-tracker-connector?utm_source=gds&utm_medium=supportUrl",
+        "supportUrl": "https://github.com/joshuatz/gds-toggl-connector?utm_source=gds&utm_medium=supportUrl",
         "description": "This connector allows you to pull Toggl time entries and summary information into Google Data Studio, through the Toggl API.",
         "shortDescription": "Pull Toggl data into Google Data Studio",
         "sources": [

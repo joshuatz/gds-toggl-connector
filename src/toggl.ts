@@ -83,6 +83,7 @@ export class TogglApi {
         }
     }
     getDetailsReportAllPages(workspaceId:number,since:Date,until:Date,filterToBillable?:boolean,startPage?:number){
+        const MAX_PAGES = 30;
         filterToBillable = typeof(filterToBillable)==='boolean' ? filterToBillable : false;
         // @TODO limit number of pages requested? Return userError if exceeded?
         let currPage = (startPage || 1);
@@ -94,7 +95,16 @@ export class TogglApi {
                 let numPerPage:number = startResult.raw['per_page'];
                 let fetchedNum:number = numPerPage * currPage;
                 let totalCount:number = startResult.raw['total_count'];
+                let totalPages:number = totalCount / numPerPage;
                 let resultArr:Array<any> = startResult.raw['data'];
+                // Limit API calls - this should only trigger on a huge date range
+                if (totalPages > MAX_PAGES){
+                    // Return early with error
+                    cc.newUserError()
+                        .setText('Too many entries requested. Please narrow your date range')
+                        .throwException();
+                    return TogglApi.getResponseTemplate(false);
+                }
                 if (fetchedNum < totalCount){
                     // Need to make request for next page.
                     // make sure to be aware of toggl 1 req/sec advice

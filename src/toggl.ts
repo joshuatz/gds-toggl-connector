@@ -1,8 +1,7 @@
-import 'google-apps-script';
 import './helpers';
 import { Converters, myConsole } from './helpers';
 import { responseTemplate, TogglDetailedReportRequestParams, TogglSummaryReportRequestParams, TogglWeeklyReportRequestParams } from './toggl-types';
-import { debugLevels } from './main';
+import {debugLevels} from './setup';
 
 /**
  * @author Joshua Tzucker

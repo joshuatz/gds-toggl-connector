@@ -1,9 +1,10 @@
-import 'google-apps-script';
 import {getUserApiKey} from './auth';
 import { TogglApi, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
 import { Converters, recurseFromString, myConsole, DateUtils, Exceptions, CacheWrapper } from './helpers';
 import { responseTemplate } from './toggl-types';
 import { fieldMapping, myFields } from './fields';
+import {GetDataReturnObj, GetDataRequest, SchemaRequest, DataReturnObjRow} from './gds-types';
+import { debugLevels } from './setup';
 
 /**
  * @author Joshua Tzucker
@@ -17,90 +18,6 @@ import { fieldMapping, myFields } from './fields';
  *      - Messy but reliable option: make a field for every single currency Toggl might return, and then map based on response
  * @TODO - handle "alltime" query?
  */
-
- /**
-  * make sure to grab enum from DataStudioApp, not GoogleAppsScript, since that won't exist in GAS online
-  */
-export const fieldTypeEnum = DataStudioApp.createCommunityConnector().FieldType;
-
-// https://developers.google.com/datastudio/connector/reference#defaultaggregationtype
-export const aggregationTypeEnum = DataStudioApp.createCommunityConnector().AggregationType;
-
-interface SchemaRequest {
-    "configParams" : object,
-    "scriptParams" : object
-}
-
-interface FieldObjNameOnly {
-    "name" : string
-}
-/**
- * https://developers.google.com/datastudio/connector/reference#request_example_3
- * Note: Fields correspond to names provided by getSchema/getFields
- */
-interface GetDataRequest {
-    "configParams"?: {
-        [index:string]: any
-    },
-    "scriptParams"?: {
-        "sampleExtraction"?: boolean,
-        "lastRefresh"?: string
-    },
-    "dateRange": {
-        "startDate": string,
-        "endDate": string
-    },
-    "fields": Array<FieldObjNameOnly>
-}
-
-interface DataReturnObjRow {
-    "values" : Array<any>
-}
-
-interface GetDataReturnObj {
-    "schema" : Array<{}>|Array<DataStudioFieldBuilt>,
-    "rows" : Array<DataReturnObjRow>,
-    "cachedData" : boolean
-}
-
-// https://developers.google.com/datastudio/connector/reference#datatype
-enum DataStudioSchemaDataType {
-    'STRING',
-    'NUMBER',
-    'BOOLEAN'
-}
-
-// https://developers.google.com/datastudio/connector/semantics
-// This should be an obj output, per field, as result of Fields.build()
-interface DataStudioFieldBuilt {
-    dataType: DataStudioSchemaDataType,
-    name: string,
-    label: string,
-    descrption?: string,
-    isDefault?: boolean,
-    semantics: {
-        conceptType: 'DIMENSION'|'METRIC',
-        semanticType: GoogleAppsScript.Data_Studio.FieldType,
-        semanticGroup?: GoogleAppsScript.Data_Studio.FieldType,
-        isReaggregatable?: boolean
-    }
-}
-
-/**
- * Some app-wide constants
- */
-export const enum debugLevels {
-    OFF = 0,
-    LOW,
-    MEDIUM,
-    HIGH
-}
-export const DEBUG_LEVEL:debugLevels = debugLevels.MEDIUM;
-const AUTH_HELP_URL:string = 'https://toggl.com/app/profile';
-// Lookup key under which user-supplied API key is stored in PropertiesService.getUserProperties
-const APIKEY_STORAGE:string = 'dscc.key';
-const APP_USER_AGENT:string = 'https://github.com/joshuatz/gds-toggl-connector'
-const VALUE_FOR_NULL:any = '';
 
 /**
  * MAIN - Setup globals

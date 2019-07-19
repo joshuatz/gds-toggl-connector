@@ -26,6 +26,9 @@ Currently, the flow is TS -> Formatter (prep-ts.js) (removes import and export s
 
 Clasp has been setup in the final /build folder, so it will push the final transpiled JS. "npm run build-push" will execute this entire workflow.
 
+## Tests
+Tests are ran locally using Jest, in combination with ts-jest, using `npm run test`. I'm currently working on mocking some GAS environment stuff so that more methods can be tested locally.
+
 ## TODO List
  - High Priority
      - Resolve possible timezone issues
@@ -33,8 +36,7 @@ Clasp has been setup in the final /build folder, so it will push the final trans
          - [Options](https://developers.google.com/datastudio/connector/publish-connector)
              - [Partner Connector](https://developers.google.com/datastudio/connector/pscc-requirements)
              - [(Open Source) Community Connector](https://developers.google.com/datastudio/connector/oscc-requirements)
- - Everything else:
-     - Add tests
+ - Everything else
      - Better way of invalidating cache (global cache keys?)
      - Try to refactor getData() into more split out functions
      - Currency converters?

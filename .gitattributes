@@ -1,0 +1,3 @@
+# Ignore build files from language stats
+build/* linguist-generated
+dist/* linguist-generated

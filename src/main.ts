@@ -32,7 +32,7 @@ export var togglApiInst = new TogglApi(getUserApiKey());
  * This is used by Data Studio to build the configuration UI screen that the user enters settings on first run
  */
 function getConfig() {
-	// Get config obj provided by gds-connector
+    // Get config obj provided by gds-connector
     let config = cc.getConfig();
     
     // Get list of workspace IDs that the user has access to
@@ -65,9 +65,9 @@ function getConfig() {
             .setPlaceholder('123456');
     }
 
-	// Set config general info
-	config.newInfo()
-		.setId('instructions')
+    // Set config general info
+    config.newInfo()
+        .setId('instructions')
         .setText('Configure the connector for Toggl');
     
     // Require workspace ID (necessary for all report API calls)
@@ -82,8 +82,8 @@ function getConfig() {
     // Require date range to be sent with every data request
     config.setDateRangeRequired(true);
 
-	// Make sure to return the built config
-	return config.build();
+    // Make sure to return the built config
+    return config.build();
 }
 
 /**
@@ -178,12 +178,12 @@ function getData(request:GetDataRequest){
     myConsole.log(request,debugLevels.MEDIUM);
 
     let now:Date = new Date();
-    let userCache:GoogleAppsScript.Cache.Cache = CacheService.getUserCache();
+    let userCache: GoogleAppsScript.Cache.Cache = CacheService.getUserCache()!;
 
     // Grab fields off incoming request
     let unorderedRequestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
     let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(unorderedRequestedFieldIds);
-    let orderedRequestedFieldIds = requestedFields.asArray().map((field)=>{return field.getId()});
+    let orderedRequestedFieldIds = requestedFields.asArray().map((field)=>{return field.getId() || ''});
 
     // What the final result should look like
     let returnData: GetDataReturnObj = {

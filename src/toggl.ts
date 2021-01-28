@@ -61,11 +61,11 @@ export class TogglApi {
     /**
      * Assemble the headers object for use with UrlFetchApp
      */
-    private _getAuthHeaders(){
+    private _getAuthHeaders(): GoogleAppsScript.URL_Fetch.URLFetchRequestOptions{
         return {
-            "headers": <object> {
-                "Content-Type" : <string> 'application/json',
-                "Authorization" : <string> this.assembleAuthHeader()
+            "headers": {
+                "Content-Type" : 'application/json',
+                "Authorization" : this.assembleAuthHeader()
             }
         }
     }

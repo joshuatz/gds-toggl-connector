@@ -16,7 +16,7 @@ export function leftPad(input:string,padWith:string,length:number){
 // Based on https://stackoverflow.com/a/6394168/11447682
 // Returns undefined if can't find it in recursion
 export function recurseFromString(obj:any,dotNotatString:string){
-	return dotNotatString.split('.').reduce(function(obj,i){
+    return dotNotatString.split('.').reduce(function(obj,i){
         return typeof(obj)==='object' ? obj[i] : undefined;
     },obj);
 }

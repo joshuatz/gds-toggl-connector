@@ -16,7 +16,8 @@
     },
     "urlFetchWhitelist" : [
         "https://www.toggl.com/",
-        "https://toggl.com/"
+        "https://toggl.com/",
+        "https://api.track.toggl.com/"
     ],
     "exceptionLogging": "STACKDRIVER"
 }

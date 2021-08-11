@@ -26,8 +26,8 @@ export enum usedToggleResponseEntriesTypes {
 export class TogglApi {
     private _authToken: string;
     private _userAgent: string;
-    private readonly _userApiBase: string = 'https://www.toggl.com/api/v8';
-    private readonly _reportApiBase: string = 'https://toggl.com/reports/api/v2';
+    private readonly _userApiBase: string = 'https://api.track.toggl.com/api/v8';
+    private readonly _reportApiBase: string = 'https://api.track.toggl.com/reports/api/v2';
     // From docs: Limits will and can change during time, but a safe window will be 1 request per second.
     private readonly _stepOffDelay: number = 1100;
     

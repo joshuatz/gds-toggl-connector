@@ -27,7 +27,7 @@ fsExtra.readdir(intermediateDir, (err, files) => {
             // Remove imports at top of files
             replace.sync({
                 files: intermediateDir + '/' + file,
-                from: /^import\s{0,2}[^\r\n]+;{0,1}$/gim,
+                from: /^import\s+.+from.+;?$|import\s+\{[^\}]+\}.+from.+;?$|^import\s["'].+["'].*;?$/gim,
                 to: ''
             });
             // Remove export statements - brace blocks

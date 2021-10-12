@@ -1,9 +1,9 @@
-import {getUserApiKey} from './auth';
+import { getUserApiKey } from './auth';
 import { TogglApi, usedTogglResponseTypes, usedToggleResponseEntriesTypes } from './toggl';
 import { Converters, recurseFromString, myConsole, DateUtils, Exceptions, CacheWrapper } from './helpers';
 import { responseTemplate } from './toggl-types';
 import { fieldMapping, myFields } from './fields';
-import {GetDataReturnObj, GetDataRequest, SchemaRequest, DataReturnObjRow} from './gds-types';
+import { GetDataReturnObj, GetDataRequest, SchemaRequest, DataReturnObjRow } from './gds-types';
 import { debugLevels } from './setup';
 
 /**
@@ -34,31 +34,34 @@ export var togglApiInst = new TogglApi(getUserApiKey());
 function getConfig() {
     // Get config obj provided by gds-connector
     let config = cc.getConfig();
-    
+
     // Get list of workspace IDs that the user has access to
     let foundWorkspaces = false;
-        try {
-            let workspaceResponse = togglApiInst.getWorkspaceIds();
-            if (workspaceResponse.success && Array.isArray(workspaceResponse.raw)){
-                let workspaceArr:any[] = workspaceResponse.raw;
-                let workspaceSelectConfigField = config.newSelectSingle()
-                    .setId('workspaceId')
-                    .setName('Toggl Workspace')
-                    .setHelpText('Select the Workspace to pull data from')
-                    .setAllowOverride(false);
-                for (let x=0; x<workspaceArr.length; x++){
-                    let currWorkspace = workspaceArr[x];
-                    workspaceSelectConfigField.addOption(config.newOptionBuilder().setLabel(currWorkspace.name).setValue(currWorkspace.id.toString()));
-                }
-                foundWorkspaces = true;
+    try {
+        let workspaceResponse = togglApiInst.getWorkspaceIds();
+        if (workspaceResponse.success && Array.isArray(workspaceResponse.raw)) {
+            let workspaceArr: any[] = workspaceResponse.raw;
+            let workspaceSelectConfigField = config
+                .newSelectSingle()
+                .setId('workspaceId')
+                .setName('Toggl Workspace')
+                .setHelpText('Select the Workspace to pull data from')
+                .setAllowOverride(false);
+            for (let x = 0; x < workspaceArr.length; x++) {
+                let currWorkspace = workspaceArr[x];
+                workspaceSelectConfigField.addOption(
+                    config.newOptionBuilder().setLabel(currWorkspace.name).setValue(currWorkspace.id.toString())
+                );
             }
+            foundWorkspaces = true;
         }
-        catch (e){
-            foundWorkspaces = false;
-        }
-    if (!foundWorkspaces){
+    } catch (e) {
+        foundWorkspaces = false;
+    }
+    if (!foundWorkspaces) {
         // Fallback to plain text field
-        config.newTextInput()
+        config
+            .newTextInput()
             .setId('workspaceId')
             .setName('Toggl Workspace ID')
             .setHelpText('Numerical ID for your workspace')
@@ -66,15 +69,13 @@ function getConfig() {
     }
 
     // Set config general info
-    config.newInfo()
-        .setId('instructions')
-        .setText('Configure the connector for Toggl');
-    
+    config.newInfo().setId('instructions').setText('Configure the connector for Toggl');
+
     // Require workspace ID (necessary for all report API calls)
-    
 
     // Allow pre-filtering to just billable time
-    config.newCheckbox()
+    config
+        .newCheckbox()
         .setId('prefilterBillable')
         .setName('Pre-filter Billable')
         .setHelpText('Pre-filter all reports to just "billable" time (as configured in Toggl)');
@@ -91,30 +92,29 @@ function getConfig() {
  * @param fieldsObj  - an existing group of fields, generated through connector.getFields();
  * @param fieldToAdd - New field to add to connector, following internal syntax
  */
-function addField(fieldsObj:GoogleAppsScript.Data_Studio.Fields,fieldToAdd:fieldMapping){
-    let chain:GoogleAppsScript.Data_Studio.Field;
+function addField(fieldsObj: GoogleAppsScript.Data_Studio.Fields, fieldToAdd: fieldMapping) {
+    let chain: GoogleAppsScript.Data_Studio.Field;
     // Dimension vs Metric
-    if (fieldToAdd.semantics.conceptType === 'DIMENSION'){
+    if (fieldToAdd.semantics.conceptType === 'DIMENSION') {
         chain = fieldsObj.newDimension();
-    }
-    else {
+    } else {
         chain = fieldsObj.newMetric();
     }
     // Field ID and Name
     chain.setId(fieldToAdd.id);
     chain.setName(fieldToAdd.name);
     // OPT: Description
-    if (typeof(fieldToAdd.description)==='string'){
+    if (typeof fieldToAdd.description === 'string') {
         chain.setDescription(fieldToAdd.description);
     }
     // Semantics
     chain.setType(fieldToAdd.semantics.semanticType);
-    if (fieldToAdd.semantics.isReaggregatable && typeof(fieldToAdd.semantics.aggregationType)!=='undefined'){
+    if (fieldToAdd.semantics.isReaggregatable && typeof fieldToAdd.semantics.aggregationType !== 'undefined') {
         chain.setIsReaggregatable(true);
         chain.setAggregation(fieldToAdd.semantics.aggregationType);
     }
     // Custom Formula / Calculated Field
-    if (fieldToAdd.formula && fieldToAdd.formula.length > 0){
+    if (fieldToAdd.formula && fieldToAdd.formula.length > 0) {
         chain.setFormula(fieldToAdd.formula);
     }
     // Return the whole field object
@@ -127,11 +127,11 @@ function addField(fieldsObj:GoogleAppsScript.Data_Studio.Fields,fieldToAdd:field
  * https://developers.google.com/datastudio/connector/reference#getschema
  * List of types: https://developers.google.com/datastudio/connector/reference#datatype
  */
-function getFields(){
+function getFields() {
     let fields = cc.getFields();
     let fieldKeys = Object.keys(myFields);
-    for (let x=0; x < fieldKeys.length; x++){
-        addField(fields,myFields[fieldKeys[x]]);
+    for (let x = 0; x < fieldKeys.length; x++) {
+        addField(fields, myFields[fieldKeys[x]]);
     }
     return fields;
 }
@@ -139,8 +139,8 @@ function getFields(){
 /**
  * @override
  */
-function getSchema(request:SchemaRequest) {
-    return {schema : getFields().build()};
+function getSchema(request: SchemaRequest) {
+    return { schema: getFields().build() };
 }
 
 /**
@@ -174,81 +174,93 @@ function getSchema(request:SchemaRequest) {
  *               // }]
  *   - Rows is also confusing - instead of each column (dimension|metric) being an object with a values array that contains rows, it is that each row is an object with a values array that contains columns.
  */
-function getData(request:GetDataRequest){
-    myConsole.log(request,debugLevels.MEDIUM);
+function getData(request: GetDataRequest) {
+    myConsole.log(request, debugLevels.MEDIUM);
 
-    let now:Date = new Date();
+    let now: Date = new Date();
     let userCache: GoogleAppsScript.Cache.Cache = CacheService.getUserCache()!;
 
     // Grab fields off incoming request
-    let unorderedRequestedFieldIds: Array<string> = request.fields.map(field=>field.name); // ['day','time','cost',...]
+    let unorderedRequestedFieldIds: Array<string> = request.fields.map((field) => field.name); // ['day','time','cost',...]
     let requestedFields: GoogleAppsScript.Data_Studio.Fields = getFields().forIds(unorderedRequestedFieldIds);
-    let orderedRequestedFieldIds = requestedFields.asArray().map((field)=>{return field.getId() || ''});
+    let orderedRequestedFieldIds = requestedFields.asArray().map((field) => {
+        return field.getId() || '';
+    });
 
     // What the final result should look like
     let returnData: GetDataReturnObj = {
-        "cachedData" : false,
-        "schema" : requestedFields.build(),
-        "rows" : []
-    }
+        cachedData: false,
+        schema: requestedFields.build(),
+        rows: []
+    };
 
     // FLAG - request is missing required info
-    let blocker:boolean = false;
-    let blockerReason:string = '';
+    let blocker: boolean = false;
+    let blockerReason: string = '';
 
     // FLAG - is there a reason to avoid using cache?
-    let avoidCache:boolean = false;
-    let foundInCache:boolean = false;
+    let avoidCache: boolean = false;
+    let foundInCache: boolean = false;
 
     // Grab date stuff off incoming request
-    let lastRefreshedTime:Date;
-    if (typeof(request.scriptParams)==='object' && typeof(request.scriptParams.lastRefresh)==='string'){
+    let lastRefreshedTime: Date;
+    if (typeof request.scriptParams === 'object' && typeof request.scriptParams.lastRefresh === 'string') {
         lastRefreshedTime = new Date(request.scriptParams.lastRefresh);
+    } else {
+        lastRefreshedTime = new Date(new Date().getTime() - 12 * 60 * 60 * 1000);
     }
-    else {
-        lastRefreshedTime = new Date(new Date().getTime() - (12*60*60*1000));
-    }
-    let dateRangeStart:Date = DateUtils.forceDateToStartOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.startDate));
-    let dateRangeEnd:Date = DateUtils.forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
-    
+    let dateRangeStart: Date = DateUtils.forceDateToStartOfDay(
+        Converters.gdsDateRangeDateToDay(request.dateRange.startDate)
+    );
+    let dateRangeEnd: Date = DateUtils.forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
+
     // Avoid cache if either end of range is within 2 days of today - since users are more likely to have recently edited entries within that span
-    if (DateUtils.getIsDateWithinXDaysOf(dateRangeStart,now,2) || DateUtils.getIsDateWithinXDaysOf(dateRangeEnd,now,2)){
+    if (
+        DateUtils.getIsDateWithinXDaysOf(dateRangeStart, now, 2) ||
+        DateUtils.getIsDateWithinXDaysOf(dateRangeEnd, now, 2)
+    ) {
         avoidCache = true;
     }
-    
 
     // Certain things in what is requested can change how route used to retrieve data...
     let canUseDetailedReport = true;
     let canUseWeeklyProjectReport = true;
     let canUseWeeklyUserReport = true;
     let canUseSummaryReport = true;
-    for (let x=0; x<orderedRequestedFieldIds.length; x++){
+    for (let x = 0; x < orderedRequestedFieldIds.length; x++) {
         let fieldId = orderedRequestedFieldIds[x];
-        canUseDetailedReport = !canUseDetailedReport ? canUseDetailedReport : getIsFieldInResponseEntryType(fieldId,'TogglDetailedEntry');
-        canUseWeeklyProjectReport = !canUseWeeklyProjectReport ? canUseWeeklyProjectReport : getIsFieldInResponseEntryType(fieldId,'TogglWeeklyProjectGroupedEntry');
-        canUseWeeklyUserReport = !canUseWeeklyUserReport ? canUseWeeklyUserReport : getIsFieldInResponseEntryType(fieldId,'TogglWeeklyUserGroupedEntry');
-        canUseSummaryReport = !canUseSummaryReport ? canUseSummaryReport :  getIsFieldInResponseEntryType(fieldId,'TogglSummaryEntry');
+        canUseDetailedReport = !canUseDetailedReport
+            ? canUseDetailedReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglDetailedEntry');
+        canUseWeeklyProjectReport = !canUseWeeklyProjectReport
+            ? canUseWeeklyProjectReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglWeeklyProjectGroupedEntry');
+        canUseWeeklyUserReport = !canUseWeeklyUserReport
+            ? canUseWeeklyUserReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglWeeklyUserGroupedEntry');
+        canUseSummaryReport = !canUseSummaryReport
+            ? canUseSummaryReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglSummaryEntry');
     }
 
-    let dateDimensionRequired:boolean = orderedRequestedFieldIds.indexOf('day')!==-1;
-    let projectDimensionRequired:boolean = (orderedRequestedFieldIds.indexOf('projectId')!==-1||orderedRequestedFieldIds.indexOf('projectName')!==-1);
+    let dateDimensionRequired: boolean = orderedRequestedFieldIds.indexOf('day') !== -1;
+    let projectDimensionRequired: boolean =
+        orderedRequestedFieldIds.indexOf('projectId') !== -1 || orderedRequestedFieldIds.indexOf('projectName') !== -1;
 
     // Config options
-    let workspaceId:number = -1;
+    let workspaceId: number = -1;
     let prefilterBillable = false;
 
     // Extract config configParams
-    if (request.configParams && typeof(request.configParams)==='object'){
-        if (typeof(request.configParams['workspaceId'])!=='undefined'){
+    if (request.configParams && typeof request.configParams === 'object') {
+        if (typeof request.configParams['workspaceId'] !== 'undefined') {
             try {
-                workspaceId = parseInt(request.configParams['workspaceId'],10);
-            }
-            catch (e){
+                workspaceId = parseInt(request.configParams['workspaceId'], 10);
+            } catch (e) {
                 blocker = true;
                 blockerReason = 'Workspace ID is required for all requests!';
             }
-        }
-        else {
+        } else {
             blocker = true;
             blockerReason = 'Workspace ID is required for all requests!';
         }
@@ -256,165 +268,197 @@ function getData(request:GetDataRequest){
     }
 
     // Early return if anything is missing
-    if (blocker){
-        cc.newUserError()
-            .setDebugText(blockerReason)
-            .setText(blockerReason)
-            .throwException();
+    if (blocker) {
+        cc.newUserError().setDebugText(blockerReason).setText(blockerReason).throwException();
         return false;
     }
 
     try {
-        if (!dateDimensionRequired && canUseSummaryReport){
+        if (!dateDimensionRequired && canUseSummaryReport) {
             // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
-            let grouping:'projects'|'clients' = (projectDimensionRequired ? 'projects' : 'clients');
-            let res:responseTemplate = TogglApi.getResponseTemplate(false);
-            let cacheKey:string = CacheWrapper.generateKeyFromInputs([workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable]);
-            if (!avoidCache){
+            let grouping: 'projects' | 'clients' = projectDimensionRequired ? 'projects' : 'clients';
+            let res: responseTemplate = TogglApi.getResponseTemplate(false);
+            let cacheKey: string = CacheWrapper.generateKeyFromInputs([
+                workspaceId,
+                dateRangeStart,
+                dateRangeEnd,
+                grouping,
+                'time_entries',
+                prefilterBillable
+            ]);
+            if (!avoidCache) {
                 try {
-                    let cacheValue:null|string = userCache.get(cacheKey);
-                    if (cacheValue){
+                    let cacheValue: null | string = userCache.get(cacheKey);
+                    if (cacheValue) {
                         res = JSON.parse(cacheValue);
                         foundInCache = true;
-                        myConsole.log('Used Cache!',debugLevels.HIGH);
+                        myConsole.log('Used Cache!', debugLevels.HIGH);
                     }
-                }
-                catch (e){
+                } catch (e) {
                     foundInCache = false;
                 }
             }
-            if (!foundInCache){
-                res = togglApiInst.getSummaryReport(workspaceId,dateRangeStart,dateRangeEnd,grouping,'time_entries',prefilterBillable);
-                myConsole.log('No cache used for response',debugLevels.HIGH);
+            if (!foundInCache) {
+                res = togglApiInst.getSummaryReport(
+                    workspaceId,
+                    dateRangeStart,
+                    dateRangeEnd,
+                    grouping,
+                    'time_entries',
+                    prefilterBillable
+                );
+                myConsole.log('No cache used for response', debugLevels.HIGH);
             }
-            if (res.success){
-                
+            if (res.success) {
                 // Map to getData rows
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglSummaryReportResponse,usedToggleResponseEntriesTypes.TogglSummaryEntry,grouping);
-                if (!foundInCache && returnData.rows.length > 0){
+                returnData.rows = mapTogglResponseToGdsFields(
+                    requestedFields,
+                    orderedRequestedFieldIds,
+                    dateRangeStart,
+                    dateRangeEnd,
+                    res.raw,
+                    usedTogglResponseTypes.TogglSummaryReportResponse,
+                    usedToggleResponseEntriesTypes.TogglSummaryEntry,
+                    grouping
+                );
+                if (!foundInCache && returnData.rows.length > 0) {
                     // Cache results
-                    userCache.put(cacheKey,JSON.stringify(res));
+                    userCache.put(cacheKey, JSON.stringify(res));
                 }
                 returnData.cachedData = foundInCache;
                 return returnData;
-            }
-            else {
+            } else {
                 return Exceptions.throwGenericApiErr();
             }
-        }
-        else if (!dateDimensionRequired && (canUseWeeklyProjectReport || canUseWeeklyUserReport)){
+        } else if (!dateDimensionRequired && (canUseWeeklyProjectReport || canUseWeeklyUserReport)) {
             // @TODO
             cc.newDebugError()
                 .setText('getData request resulted in trying to use getWeeklyReport, which has not been built yet')
                 .throwException();
-        }
-        else if (dateDimensionRequired || canUseDetailedReport){
-            myConsole.log('dateDimensionRequired',debugLevels.HIGH);
+        } else if (dateDimensionRequired || canUseDetailedReport) {
+            myConsole.log('dateDimensionRequired', debugLevels.HIGH);
             // The only request type that a date dimension is the detailed report
-            let res:responseTemplate = TogglApi.getResponseTemplate(false);
-            let cacheKey:string = CacheWrapper.generateKeyFromInputs([workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable]);
-            if (!avoidCache){
+            let res: responseTemplate = TogglApi.getResponseTemplate(false);
+            let cacheKey: string = CacheWrapper.generateKeyFromInputs([
+                workspaceId,
+                dateRangeStart,
+                dateRangeEnd,
+                prefilterBillable
+            ]);
+            if (!avoidCache) {
                 try {
-                    let cacheValue:null|string = userCache.get(cacheKey);
-                    if (cacheValue){
+                    let cacheValue: null | string = userCache.get(cacheKey);
+                    if (cacheValue) {
                         res = JSON.parse(cacheValue);
                         foundInCache = true;
-                        myConsole.log('Used Cache!',debugLevels.HIGH);
+                        myConsole.log('Used Cache!', debugLevels.HIGH);
                     }
-                }
-                catch (e){
+                } catch (e) {
                     foundInCache = false;
                 }
             }
-            if (!foundInCache){
-                res = togglApiInst.getDetailsReportAllPages(workspaceId,dateRangeStart,dateRangeEnd,prefilterBillable);
-                myConsole.log('No cache used for response',debugLevels.HIGH);
+            if (!foundInCache) {
+                res = togglApiInst.getDetailsReportAllPages(
+                    workspaceId,
+                    dateRangeStart,
+                    dateRangeEnd,
+                    prefilterBillable
+                );
+                myConsole.log('No cache used for response', debugLevels.HIGH);
             }
-            if (res.success){
+            if (res.success) {
                 // Map to getData rows
-                returnData.rows = mapTogglResponseToGdsFields(requestedFields,orderedRequestedFieldIds,dateRangeStart,dateRangeEnd,res.raw,usedTogglResponseTypes.TogglDetailedReportResponse,usedToggleResponseEntriesTypes.TogglDetailedEntry);
-                if (!foundInCache && returnData.rows.length > 0){
+                returnData.rows = mapTogglResponseToGdsFields(
+                    requestedFields,
+                    orderedRequestedFieldIds,
+                    dateRangeStart,
+                    dateRangeEnd,
+                    res.raw,
+                    usedTogglResponseTypes.TogglDetailedReportResponse,
+                    usedToggleResponseEntriesTypes.TogglDetailedEntry
+                );
+                if (!foundInCache && returnData.rows.length > 0) {
                     // Cache results
-                    userCache.put(cacheKey,JSON.stringify(res));
+                    userCache.put(cacheKey, JSON.stringify(res));
                 }
                 returnData.cachedData = foundInCache;
-                myConsole.log(returnData,debugLevels.HIGH);
+                myConsole.log(returnData, debugLevels.HIGH);
                 return returnData;
-            }
-            else {
+            } else {
                 return Exceptions.throwGenericApiErr();
             }
-        }
-        else {
+        } else {
             cc.newUserError()
                 .setDebugText('No API call was made, could not determine endpoint based on dimensions requested')
                 .setText('Invalid combination of dimensions')
                 .throwException();
-            myConsole.error('No API call was made, could not determine endpoint based on dimensions requested',debugLevels.LOW);
+            myConsole.error(
+                'No API call was made, could not determine endpoint based on dimensions requested',
+                debugLevels.LOW
+            );
         }
-    }
-    catch (err){
+    } catch (err: any) {
         cc.newUserError()
             .setDebugText(err.toString())
             .setText('Something went wrong fetching from Toggl')
             .throwException();
-        myConsole.error(err,debugLevels.LOW);
+        myConsole.error(err, debugLevels.LOW);
     }
 }
 
 /**
  * @override
  */
-function isAdminUser(){
+function isAdminUser() {
     // No spam please :)
-    let email:string = 'am9zaHVhLnR6QGdtYWlsLmNvbQ==';
-    return Utilities.base64EncodeWebSafe(Session.getEffectiveUser().getEmail(),Utilities.Charset.UTF_8) === email;
+    let email: string = 'am9zaHVhLnR6QGdtYWlsLmNvbQ==';
+    return Utilities.base64EncodeWebSafe(Session.getEffectiveUser().getEmail(), Utilities.Charset.UTF_8) === email;
 }
 
 /**
  * Maps a Toggl API response to GDS formatted rows to return inside getData()
  * Things to note:
  *      - Everything needs to be aggregated by dimension and # needs to match; e.g. if GDS requests two dimensions (columns), only two data points per row should be returned
- * @param requestedFields 
- * @param requestedFieldIds 
- * @param requestedStart 
+ * @param requestedFields
+ * @param requestedFieldIds
+ * @param requestedStart
  * @param requestedEnd
- * @param response 
- * @param responseType 
- * @param entryType 
- * @param requestedGrouping 
+ * @param response
+ * @param responseType
+ * @param entryType
+ * @param requestedGrouping
  */
 function mapTogglResponseToGdsFields(
-    requestedFields:GoogleAppsScript.Data_Studio.Fields|null,
-    requestedFieldIds:Array<string>,
-    requestedStart:Date,
-    requestedEnd:Date,
-    response:{[index:string]:any},
-    responseType:usedTogglResponseTypes,
-    entryType:usedToggleResponseEntriesTypes,
-    requestedGrouping?:"projects"|"clients"|"users") {
-        
+    requestedFields: GoogleAppsScript.Data_Studio.Fields | null,
+    requestedFieldIds: Array<string>,
+    requestedStart: Date,
+    requestedEnd: Date,
+    response: { [index: string]: any },
+    responseType: usedTogglResponseTypes,
+    entryType: usedToggleResponseEntriesTypes,
+    requestedGrouping?: 'projects' | 'clients' | 'users'
+) {
     // Need to get literal string key from enum
-    let entryTypeStringIndex:string = usedToggleResponseEntriesTypes[entryType];
+    let entryTypeStringIndex: string = usedToggleResponseEntriesTypes[entryType];
     let mappedData: Array<DataReturnObjRow> = [];
     response.data = Array.isArray(response.data) ? response.data : [];
     let entryArr = response.data;
 
-    if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
+    if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse) {
         // Each summary entry also contains a sub-array of entries that are grouped to that summary item. I am going to copy up and reaggregate certain values off that subarray, adding them to the parent entry
         // For example, one entry with three sub items would stay one entry, but have the averages of those three subitems added as new props
-        for (let x=0; x<entryArr.length; x++){
+        for (let x = 0; x < entryArr.length; x++) {
             let entryBase = entryArr[x];
-            if (Array.isArray(entryBase['items']) && entryBase.items.length > 0){
+            if (Array.isArray(entryBase['items']) && entryBase.items.length > 0) {
                 let cBillingRate = 0;
                 let totalBillingSum = 0;
                 let totalBillingTime = 0;
-                for (let s=0; s<entryBase.items.length; s++){
+                for (let s = 0; s < entryBase.items.length; s++) {
                     let subItem = entryBase.items[s];
-                    cBillingRate += typeof(subItem.rate)==='number' ? subItem.rate : 0;
-                    let subItemBillingSum = typeof(subItem.sum)==='number' ? subItem.sum : 0;
+                    cBillingRate += typeof subItem.rate === 'number' ? subItem.rate : 0;
+                    let subItemBillingSum = typeof subItem.sum === 'number' ? subItem.sum : 0;
                     totalBillingSum += subItemBillingSum;
-                    if (subItemBillingSum > 0){
+                    if (subItemBillingSum > 0) {
                         // Time was billable
                         totalBillingTime += subItem.time;
                     }
@@ -427,74 +471,75 @@ function mapTogglResponseToGdsFields(
         }
     }
 
-
-    let suppressedRowCount:number = 0;
+    let suppressedRowCount: number = 0;
 
     // Loop over response entries - [ROWS]
-    for (let x=0; x<entryArr.length; x++){
+    for (let x = 0; x < entryArr.length; x++) {
         // Flag - suppress row being passed to GDS
-        let suppressRow:boolean = false;
+        let suppressRow: boolean = false;
 
         let entry = entryArr[x];
         let row: DataReturnObjRow = {
             values: []
-        }
+        };
 
         // lets do some pre-processing, per entry
-        if (responseType === usedTogglResponseTypes.TogglDetailedReportResponse){
+        if (responseType === usedTogglResponseTypes.TogglDetailedReportResponse) {
             // If billable, copy time amount as new prop
-            if (entry.isBillable===true){
+            if (entry.isBillable === true) {
                 entry['billableTime'] = entry.dur;
             }
-        }
-        else if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse){
+        } else if (responseType === usedTogglResponseTypes.TogglSummaryReportResponse) {
             // Summary reports can be grouped - and the ID field in response changes to match
-            if (requestedGrouping==='projects'){
+            if (requestedGrouping === 'projects') {
                 entry['pid'] = entry.id;
-            }
-            else if (requestedGrouping==='clients'){
+            } else if (requestedGrouping === 'clients') {
                 entry['cid'] = entry.id;
-            }
-            else if (requestedGrouping==='users'){
+            } else if (requestedGrouping === 'users') {
                 entry['uid'] = entry.id;
             }
-        }
-        else if (responseType === usedTogglResponseTypes.TogglWeeklyReportResponse){
+        } else if (responseType === usedTogglResponseTypes.TogglWeeklyReportResponse) {
             // @TODO ?
         }
 
         // Iterate over requested fields [COLUMNS]
-        for (let x=0; x<requestedFieldIds.length; x++){
-            let fieldMapping = myFields[requestedFieldIds[x]]; 
+        for (let x = 0; x < requestedFieldIds.length; x++) {
+            let fieldMapping = myFields[requestedFieldIds[x]];
 
             // Make sure to pass *something* to GDS for every requested field!
-            let valueToPass:any = null;
-            if (fieldMapping){
-                valueToPass = extractValueFromEntryWithMapping(entry,fieldMapping,entryTypeStringIndex);
+            let valueToPass: any = null;
+            if (fieldMapping) {
+                valueToPass = extractValueFromEntryWithMapping(entry, fieldMapping, entryTypeStringIndex);
             }
 
-            if (fieldMapping.id ==='day' && fieldMapping.semantics.conceptType==='DIMENSION'){
+            if (fieldMapping.id === 'day' && fieldMapping.semantics.conceptType === 'DIMENSION') {
                 // !!! - Special - !!!
                 // Sometimes Toggl will return entries that overlap days. This can lead to the dreaded "number of columns returned don't match requested" error from GDS if blinding returning a date that GDS did not actually request.
-                
-                if (typeof(fieldMapping.togglMapping)==='object'){
+
+                if (typeof fieldMapping.togglMapping === 'object') {
                     // Take care to make copy so not modifying reference
-                    let augmentedMapping:fieldMapping = {
+                    let augmentedMapping: fieldMapping = {
                         id: fieldMapping.id,
                         name: fieldMapping.name,
                         semantics: fieldMapping.semantics,
                         togglMapping: {
                             fields: fieldMapping.togglMapping.fields,
-                            formatter: (date:string)=>{
+                            formatter: (date: string) => {
                                 // Convert Toggl date to true Date Obj
                                 // Note - Toggl includes Timezone with date ("start":"2019-06-28T18:54:50-07:00"), so remove it to make compatible with checking date range (with uses GMT)
-                                let convertedDate:Date = new Date(date.replace(/(\d{4}-\d{2}-\d{2}T[^-]+-).*/,'$100:00'));
+                                let convertedDate: Date = new Date(
+                                    date.replace(/(\d{4}-\d{2}-\d{2}T[^-]+-).*/, '$100:00')
+                                );
                                 return convertedDate;
                             }
                         }
-                    }
-                    let fieldDate:Date = extractValueFromEntryWithMapping(entry,augmentedMapping,entryTypeStringIndex);
-                    if (!DateUtils.getIsDateInDateTimeRange(fieldDate,requestedStart,requestedEnd)){
+                    };
+                    let fieldDate: Date = extractValueFromEntryWithMapping(
+                        entry,
+                        augmentedMapping,
+                        entryTypeStringIndex
+                    );
+                    if (!DateUtils.getIsDateInDateTimeRange(fieldDate, requestedStart, requestedEnd)) {
                         suppressRow = true;
                         suppressedRowCount++;
                     }
@@ -503,13 +548,16 @@ function mapTogglResponseToGdsFields(
             row.values.push(valueToPass);
         }
         // Push the entire entry row to results
-        if (!suppressRow){
+        if (!suppressRow) {
             mappedData.push(row);
         }
     }
 
-    if (suppressedRowCount > 0){
-        myConsole.log('Suppressed ' + suppressedRowCount.toString() + ' rows based on misaligned date',debugLevels.HIGH);
+    if (suppressedRowCount > 0) {
+        myConsole.log(
+            'Suppressed ' + suppressedRowCount.toString() + ' rows based on misaligned date',
+            debugLevels.HIGH
+        );
     }
 
     return mappedData;
@@ -522,45 +570,47 @@ function mapTogglResponseToGdsFields(
  * @param entryTypeStringIndex {string} - Toggl entry type enum, converted to string
  * @return {any} - always returns a value, with VALUE_FOR_NULL global being the placeholder if no mapping was found. GDS always expects a value in column
  */
-function extractValueFromEntryWithMapping(entry:{[index:string]:any},fieldMapping:fieldMapping,entryTypeStringIndex:string): any{
-    let extractedValue:any = VALUE_FOR_NULL;
+function extractValueFromEntryWithMapping(
+    entry: { [index: string]: any },
+    fieldMapping: fieldMapping,
+    entryTypeStringIndex: string
+): any {
+    let extractedValue: any = VALUE_FOR_NULL;
     let togglMapping = fieldMapping.togglMapping;
-    if (togglMapping){
+    if (togglMapping) {
         // Look up the individual field mappings
         let fields = togglMapping.fields[entryTypeStringIndex];
-        if (fields){
+        if (fields) {
             // Iterate over field keys
-            let foundVals:Array<any> = [];
-            for (let x=0; x<fields.length; x++){
-                let val:any = recurseFromString(entry,fields[x]);
-                if (typeof(val)!=='undefined'){
+            let foundVals: Array<any> = [];
+            for (let x = 0; x < fields.length; x++) {
+                let val: any = recurseFromString(entry, fields[x]);
+                if (typeof val !== 'undefined') {
                     foundVals.push(val);
                 }
             }
-            if (foundVals.length > 0){
-                if ('formatter' in togglMapping && typeof(togglMapping['formatter'])==='function'){
-                    extractedValue = togglMapping.formatter.apply(entry,foundVals);
-                }
-                else {
+            if (foundVals.length > 0) {
+                if ('formatter' in togglMapping && typeof togglMapping['formatter'] === 'function') {
+                    extractedValue = togglMapping.formatter.apply(entry, foundVals);
+                } else {
                     // Assume we only want first val
                     extractedValue = foundVals[0];
                 }
-            }
-            else {
+            } else {
                 Logger.log('No required fields were found for mapping of "' + fieldMapping.id + '"');
             }
         }
     }
-    extractedValue = typeof(extractedValue)!=='undefined' ? extractedValue : VALUE_FOR_NULL;
+    extractedValue = typeof extractedValue !== 'undefined' ? extractedValue : VALUE_FOR_NULL;
     return extractedValue;
 }
 
-function testDateString(){
+function testDateString() {
     let startString = '2019-06-28';
-    let startDate:Date = new Date(startString);
-    let forcedEnd:Date = DateUtils.forceDateToEndOfDay(startDate);
-    let forcedStart:Date = DateUtils.forceDateToStartOfDay(startDate);
-    let test:any = {
+    let startDate: Date = new Date(startString);
+    let forcedEnd: Date = DateUtils.forceDateToEndOfDay(startDate);
+    let forcedStart: Date = DateUtils.forceDateToStartOfDay(startDate);
+    let test: any = {
         input: startString,
         toString: startDate.toString(),
         toUTCString: startDate.toUTCString(),
@@ -572,7 +622,7 @@ function testDateString(){
             toString: forcedEnd.toString(),
             toUTCString: forcedEnd.toUTCString()
         }
-    }
+    };
     myConsole.log(test);
 }
 
@@ -582,9 +632,9 @@ function testDateString(){
  * @param entryTypeStringIndex {string} - The string representation of a Toggl entry type (should correspond to usedToggleResponseEntriesTypes enum)
  * @returns {boolean}
  */
-function getIsFieldInResponseEntryType(fieldId:string,entryTypeStringIndex:string): boolean{
+function getIsFieldInResponseEntryType(fieldId: string, entryTypeStringIndex: string): boolean {
     let fieldMapping = myFields[fieldId].togglMapping;
-    if (fieldMapping){
+    if (fieldMapping) {
         return Array.isArray(fieldMapping.fields[entryTypeStringIndex]);
     }
     return false;

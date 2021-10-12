@@ -23,12 +23,14 @@
         "auth.ts"
     ],
     "scripts": {
-        "test": "jest",
+        "test": "npm run lint && jest",
         "prep-ts": "node prep-ts.js",
         "run-tsc": "tsc",
         "prep-build": "node prep-build-dir.js",
         "build": "npm run prep-build && npm run prep-ts && npm run run-tsc && node add-polyfills.js",
-        "build-push": "npm run build && cd build && clasp push"
+        "build-push": "npm run build && cd build && clasp push",
+        "lint": "prettier --check \"src/**/*.ts\" \"*.js\"",
+        "format": "prettier --write \"src/**/*.ts\" \"*.js\""
     },
     "dependencies": {
         "es6-object-assign": "^1.1.0",

@@ -1,36 +1,36 @@
-import {aggregationTypeEnum } from './gds-types';
+import { aggregationTypeEnum } from './gds-types';
 import { Converters } from './helpers';
-import {fieldTypeEnum} from './gds-types';
+import { fieldTypeEnum } from './gds-types';
 
 /**
  * To keep things clean and help with type checking, I'm maintaining a list of fields separately from getFields that will be used on both ends - prepping the fields and parsing return data
  */
 
 export interface fieldMapping {
-    id: string,
-    name: string,
-    description?: string,
-    formula?: string,
+    id: string;
+    name: string;
+    description?: string;
+    formula?: string;
     togglMapping?: {
         fields: {
-            [index:string]: Array<string>|undefined,
-            TogglDetailedEntry?: Array<string>,
-            TogglWeeklyProjectGroupedEntry?: Array<string>,
-            TogglWeeklyUserGroupedEntry?: Array<string>,
-            TogglSummaryEntry?: Array<string>
-        },
-        formatter?: Function
-    },
+            [index: string]: Array<string> | undefined;
+            TogglDetailedEntry?: Array<string>;
+            TogglWeeklyProjectGroupedEntry?: Array<string>;
+            TogglWeeklyUserGroupedEntry?: Array<string>;
+            TogglSummaryEntry?: Array<string>;
+        };
+        formatter?: Function;
+    };
     semantics: {
-        conceptType: 'DIMENSION'|'METRIC',
-        semanticType: GoogleAppsScript.Data_Studio.FieldType,
-        semanticGroup?: GoogleAppsScript.Data_Studio.FieldType,
-        aggregationType?: GoogleAppsScript.Data_Studio.AggregationType
-        isReaggregatable?: boolean
-    }
+        conceptType: 'DIMENSION' | 'METRIC';
+        semanticType: GoogleAppsScript.Data_Studio.FieldType;
+        semanticGroup?: GoogleAppsScript.Data_Studio.FieldType;
+        aggregationType?: GoogleAppsScript.Data_Studio.AggregationType;
+        isReaggregatable?: boolean;
+    };
 }
 
-export const myFields: {[index:string]:fieldMapping} = {
+export const myFields: { [index: string]: fieldMapping } = {
     // Default date/time dimensions
     day: {
         id: 'day',
@@ -39,8 +39,8 @@ export const myFields: {[index:string]:fieldMapping} = {
             fields: {
                 TogglDetailedEntry: ['start']
             },
-            formatter: (date:string)=>{
-                return Converters.formatDateForGds(date,fieldTypeEnum.YEAR_MONTH_DAY);
+            formatter: (date: string) => {
+                return Converters.formatDateForGds(date, fieldTypeEnum.YEAR_MONTH_DAY);
             }
         },
         semantics: {
@@ -56,8 +56,8 @@ export const myFields: {[index:string]:fieldMapping} = {
             fields: {
                 TogglDetailedEntry: ['start']
             },
-            formatter: (date:string)=>{
-                return Converters.formatDateForGds(date,fieldTypeEnum.YEAR_MONTH_DAY_HOUR);
+            formatter: (date: string) => {
+                return Converters.formatDateForGds(date, fieldTypeEnum.YEAR_MONTH_DAY_HOUR);
             }
         },
         semantics: {
@@ -77,8 +77,8 @@ export const myFields: {[index:string]:fieldMapping} = {
             fields: {
                 TogglDetailedEntry: ['end']
             },
-            formatter: (date:string)=>{
-                return Converters.formatDateForGds(date,fieldTypeEnum.YEAR_MONTH_DAY_HOUR);
+            formatter: (date: string) => {
+                return Converters.formatDateForGds(date, fieldTypeEnum.YEAR_MONTH_DAY_HOUR);
             }
         }
     },
@@ -243,7 +243,7 @@ export const myFields: {[index:string]:fieldMapping} = {
                 TogglDetailedEntry: ['billableTime'],
                 TogglSummaryEntry: ['totalBillingTime']
             },
-            formatter: (duration:number)=>{
+            formatter: (duration: number) => {
                 return Converters.togglDurationToGdsDuration(duration);
             }
         }
@@ -290,7 +290,7 @@ export const myFields: {[index:string]:fieldMapping} = {
                 TogglDetailedEntry: ['dur'],
                 TogglSummaryEntry: ['time']
             },
-            formatter: (duration:number)=>{
+            formatter: (duration: number) => {
                 return Converters.togglDurationToGdsDuration(duration);
             }
         },
@@ -344,8 +344,8 @@ export const myFields: {[index:string]:fieldMapping} = {
             fields: {
                 TogglDetailedEntry: ['updated']
             },
-            formatter: (date:string)=>{
-                return Converters.formatDateForGds(date,fieldTypeEnum.YEAR_MONTH_DAY_HOUR);
+            formatter: (date: string) => {
+                return Converters.formatDateForGds(date, fieldTypeEnum.YEAR_MONTH_DAY_HOUR);
             }
         }
     },
@@ -365,4 +365,4 @@ export const myFields: {[index:string]:fieldMapping} = {
         }
     }
     // @TODO - Add "tags"
-}
+};

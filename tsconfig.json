@@ -17,7 +17,6 @@
   
       /* Module Resolution Options */
       "moduleResolution": "node",
-      // "types": [],
       "esModuleInterop": true
     },
     "include": [

@@ -21,7 +21,107 @@ var DataStudioSchemaDataType;
  */
 var fieldTypeEnum = DataStudioApp.createCommunityConnector().FieldType;
 // I've hardcoded this as an obj, because `export const enum` causes a LOT of issues with TS in various spots (testing, mocking, etc), because of how it get transpiled
-var fieldTypeEnumObj = { "YEAR": 0, "YEAR_QUARTER": 1, "YEAR_MONTH": 2, "YEAR_WEEK": 3, "YEAR_MONTH_DAY": 4, "YEAR_MONTH_DAY_HOUR": 5, "QUARTER": 6, "MONTH": 7, "WEEK": 8, "MONTH_DAY": 9, "DAY_OF_WEEK": 10, "DAY": 11, "HOUR": 12, "MINUTE": 13, "DURATION": 14, "COUNTRY": 15, "COUNTRY_CODE": 16, "CONTINENT": 17, "CONTINENT_CODE": 18, "SUB_CONTINENT": 19, "SUB_CONTINENT_CODE": 20, "REGION": 21, "REGION_CODE": 22, "CITY": 23, "CITY_CODE": 24, "METRO": 25, "METRO_CODE": 26, "LATITUDE_LONGITUDE": 27, "NUMBER": 28, "PERCENT": 29, "TEXT": 30, "BOOLEAN": 31, "URL": 32, "HYPERLINK": 33, "IMAGE": 34, "IMAGE_LINK": 35, "CURRENCY_AED": 36, "CURRENCY_ALL": 37, "CURRENCY_ARS": 38, "CURRENCY_AUD": 39, "CURRENCY_BDT": 40, "CURRENCY_BGN": 41, "CURRENCY_BOB": 42, "CURRENCY_BRL": 43, "CURRENCY_CAD": 44, "CURRENCY_CDF": 45, "CURRENCY_CHF": 46, "CURRENCY_CLP": 47, "CURRENCY_CNY": 48, "CURRENCY_COP": 49, "CURRENCY_CRC": 50, "CURRENCY_CZK": 51, "CURRENCY_DKK": 52, "CURRENCY_DOP": 53, "CURRENCY_EGP": 54, "CURRENCY_ETB": 55, "CURRENCY_EUR": 56, "CURRENCY_GBP": 57, "CURRENCY_HKD": 58, "CURRENCY_HRK": 59, "CURRENCY_HUF": 60, "CURRENCY_IDR": 61, "CURRENCY_ILS": 62, "CURRENCY_INR": 63, "CURRENCY_IRR": 64, "CURRENCY_ISK": 65, "CURRENCY_JMD": 66, "CURRENCY_JPY": 67, "CURRENCY_KRW": 68, "CURRENCY_LKR": 69, "CURRENCY_LTL": 70, "CURRENCY_MNT": 71, "CURRENCY_MVR": 72, "CURRENCY_MXN": 73, "CURRENCY_MYR": 74, "CURRENCY_NOK": 75, "CURRENCY_NZD": 76, "CURRENCY_PAB": 77, "CURRENCY_PEN": 78, "CURRENCY_PHP": 79, "CURRENCY_PKR": 80, "CURRENCY_PLN": 81, "CURRENCY_RON": 82, "CURRENCY_RSD": 83, "CURRENCY_RUB": 84, "CURRENCY_SAR": 85, "CURRENCY_SEK": 86, "CURRENCY_SGD": 87, "CURRENCY_THB": 88, "CURRENCY_TRY": 89, "CURRENCY_TWD": 90, "CURRENCY_TZS": 91, "CURRENCY_UAH": 92, "CURRENCY_USD": 93, "CURRENCY_UYU": 94, "CURRENCY_VEF": 95, "CURRENCY_VND": 96, "CURRENCY_YER": 97, "CURRENCY_ZAR": 98 };
+var fieldTypeEnumObj = {
+    YEAR: 0,
+    YEAR_QUARTER: 1,
+    YEAR_MONTH: 2,
+    YEAR_WEEK: 3,
+    YEAR_MONTH_DAY: 4,
+    YEAR_MONTH_DAY_HOUR: 5,
+    QUARTER: 6,
+    MONTH: 7,
+    WEEK: 8,
+    MONTH_DAY: 9,
+    DAY_OF_WEEK: 10,
+    DAY: 11,
+    HOUR: 12,
+    MINUTE: 13,
+    DURATION: 14,
+    COUNTRY: 15,
+    COUNTRY_CODE: 16,
+    CONTINENT: 17,
+    CONTINENT_CODE: 18,
+    SUB_CONTINENT: 19,
+    SUB_CONTINENT_CODE: 20,
+    REGION: 21,
+    REGION_CODE: 22,
+    CITY: 23,
+    CITY_CODE: 24,
+    METRO: 25,
+    METRO_CODE: 26,
+    LATITUDE_LONGITUDE: 27,
+    NUMBER: 28,
+    PERCENT: 29,
+    TEXT: 30,
+    BOOLEAN: 31,
+    URL: 32,
+    HYPERLINK: 33,
+    IMAGE: 34,
+    IMAGE_LINK: 35,
+    CURRENCY_AED: 36,
+    CURRENCY_ALL: 37,
+    CURRENCY_ARS: 38,
+    CURRENCY_AUD: 39,
+    CURRENCY_BDT: 40,
+    CURRENCY_BGN: 41,
+    CURRENCY_BOB: 42,
+    CURRENCY_BRL: 43,
+    CURRENCY_CAD: 44,
+    CURRENCY_CDF: 45,
+    CURRENCY_CHF: 46,
+    CURRENCY_CLP: 47,
+    CURRENCY_CNY: 48,
+    CURRENCY_COP: 49,
+    CURRENCY_CRC: 50,
+    CURRENCY_CZK: 51,
+    CURRENCY_DKK: 52,
+    CURRENCY_DOP: 53,
+    CURRENCY_EGP: 54,
+    CURRENCY_ETB: 55,
+    CURRENCY_EUR: 56,
+    CURRENCY_GBP: 57,
+    CURRENCY_HKD: 58,
+    CURRENCY_HRK: 59,
+    CURRENCY_HUF: 60,
+    CURRENCY_IDR: 61,
+    CURRENCY_ILS: 62,
+    CURRENCY_INR: 63,
+    CURRENCY_IRR: 64,
+    CURRENCY_ISK: 65,
+    CURRENCY_JMD: 66,
+    CURRENCY_JPY: 67,
+    CURRENCY_KRW: 68,
+    CURRENCY_LKR: 69,
+    CURRENCY_LTL: 70,
+    CURRENCY_MNT: 71,
+    CURRENCY_MVR: 72,
+    CURRENCY_MXN: 73,
+    CURRENCY_MYR: 74,
+    CURRENCY_NOK: 75,
+    CURRENCY_NZD: 76,
+    CURRENCY_PAB: 77,
+    CURRENCY_PEN: 78,
+    CURRENCY_PHP: 79,
+    CURRENCY_PKR: 80,
+    CURRENCY_PLN: 81,
+    CURRENCY_RON: 82,
+    CURRENCY_RSD: 83,
+    CURRENCY_RUB: 84,
+    CURRENCY_SAR: 85,
+    CURRENCY_SEK: 86,
+    CURRENCY_SGD: 87,
+    CURRENCY_THB: 88,
+    CURRENCY_TRY: 89,
+    CURRENCY_TWD: 90,
+    CURRENCY_TZS: 91,
+    CURRENCY_UAH: 92,
+    CURRENCY_USD: 93,
+    CURRENCY_UYU: 94,
+    CURRENCY_VEF: 95,
+    CURRENCY_VND: 96,
+    CURRENCY_YER: 97,
+    CURRENCY_ZAR: 98
+};
 var DEBUG_LEVEL = 2 /* MEDIUM */;
 var AUTH_HELP_URL = 'https://track.toggl.com/profile';
 // Lookup key under which user-supplied API key is stored in PropertiesService.getUserProperties
@@ -43,7 +143,7 @@ function leftPad(input, padWith, length) {
 // Returns undefined if can't find it in recursion
 function recurseFromString(obj, dotNotatString) {
     return dotNotatString.split('.').reduce(function (obj, i) {
-        return typeof (obj) === 'object' ? obj[i] : undefined;
+        return typeof obj === 'object' ? obj[i] : undefined;
     }, obj);
 }
 /**
@@ -70,7 +170,7 @@ var Converters = /** @class */ (function () {
         var year = dateToFormat.getFullYear().toString();
         var monthInt = dateToFormat.getMonth() + 1;
         var month = monthInt.toString();
-        var day = (dateToFormat.getDate()).toString();
+        var day = dateToFormat.getDate().toString();
         var hours = dateToFormat.getHours();
         var quarter = Converters.getQuarterFromMonth(monthInt);
         var dateParts = {
@@ -93,7 +193,7 @@ var Converters = /** @class */ (function () {
      */
     Converters.formatDateForTogglApi = function (date) {
         try {
-            var dateToFormat = typeof (date) === 'string' ? (new Date(date)) : date;
+            var dateToFormat = typeof date === 'string' ? new Date(date) : date;
             var dateParts = Converters.getDateParts(dateToFormat);
             var togglFormattedDate = [dateParts.year, dateParts.monthPadded, dateParts.dayPadded].join('-');
             return togglFormattedDate;
@@ -108,7 +208,7 @@ var Converters = /** @class */ (function () {
         var dayNum = d.getUTCDay() || 7;
         d.setUTCDate(d.getUTCDate() + 4 - dayNum);
         var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        return Math.ceil((((+d - +yearStart) / 86400000) + 1) / 7);
+        return Math.ceil(((+d - +yearStart) / 86400000 + 1) / 7);
     };
     /**
      * Formats any given date (or parseable date string) into a GDS formatted date
@@ -120,7 +220,7 @@ var Converters = /** @class */ (function () {
     Converters.formatDateForGds = function (date, gdsDateType) {
         var fieldTypes = DataStudioApp.createCommunityConnector().FieldType;
         try {
-            var dateToFormat = typeof (date) === 'string' ? (new Date(date)) : new Date(date.getTime());
+            var dateToFormat = typeof date === 'string' ? new Date(date) : new Date(date.getTime());
             var dateParts = Converters.getDateParts(dateToFormat);
             var dateString = '';
             if (gdsDateType === fieldTypes.YEAR) {
@@ -174,7 +274,7 @@ var Converters = /** @class */ (function () {
             var year = parseInt(match[1], 10);
             var month = parseInt(match[2], 10) - 1;
             var day = parseInt(match[3], 10);
-            return (new Date(year, month, day));
+            return new Date(year, month, day);
         }
         else {
             return new Date(gdsDashedDate);
@@ -187,7 +287,7 @@ var Converters = /** @class */ (function () {
      */
     Converters.formatCurrencyForGds = function (amount) {
         if (amount) {
-            if (typeof (amount) === 'string') {
+            if (typeof amount === 'string') {
                 return parseFloat(amount);
             }
             else {
@@ -195,11 +295,11 @@ var Converters = /** @class */ (function () {
             }
         }
         else {
-            return 0.00;
+            return 0.0;
         }
     };
     Converters.forceBoolean = function (input) {
-        if (typeof (input) === 'boolean') {
+        if (typeof input === 'boolean') {
             return input;
         }
         else {
@@ -220,18 +320,18 @@ var myConsole = /** @class */ (function () {
      */
     myConsole.formatThingForConsole = function (thing) {
         var result = thing;
-        if (typeof (thing) === 'object') {
+        if (typeof thing === 'object') {
             result = {
                 message: JSON.stringify(thing)
             };
         }
-        else if (typeof (thing) === 'string') {
+        else if (typeof thing === 'string') {
             result = {
                 message: thing
             };
         }
         else {
-            if (thing && typeof (thing.toString) === 'function') {
+            if (thing && typeof thing.toString === 'function') {
                 result = {
                     message: thing.toString()
                 };
@@ -275,7 +375,7 @@ var DateUtils = /** @class */ (function () {
     };
     DateUtils.getIsDateWithinXDaysOf = function (dateTimeToCheck, dateToSetRangeAround, xDaysAround) {
         xDaysAround = Math.abs(xDaysAround);
-        var rangeStart = DateUtils.offsetDateByDays(dateToSetRangeAround, (-1 * xDaysAround));
+        var rangeStart = DateUtils.offsetDateByDays(dateToSetRangeAround, -1 * xDaysAround);
         var rangeEnd = DateUtils.offsetDateByDays(dateToSetRangeAround, xDaysAround);
         return DateUtils.getIsDateInDateTimeRange(dateTimeToCheck, rangeStart, rangeEnd);
     };
@@ -322,7 +422,7 @@ var CacheWrapper = /** @class */ (function () {
      * @param inputs Array of anything to use for composite key
      */
     CacheWrapper.generateKeyFromInputs = function (inputs) {
-        var key = (new Date()).getTime().toString();
+        var key = new Date().getTime().toString();
         if (inputs.length > 0) {
             key = '';
             for (var x = 0; x < inputs.length; x++) {
@@ -348,13 +448,13 @@ var CacheWrapper = /** @class */ (function () {
  */
 function myStringifer(input) {
     var result = '';
-    if (typeof (input) === 'object') {
+    if (typeof input === 'object') {
         result = JSON.stringify(input);
     }
-    else if (typeof (input) === 'string') {
+    else if (typeof input === 'string') {
         result = input;
     }
-    else if (typeof (input.toString) === 'function') {
+    else if (typeof input.toString === 'function') {
         result = input.toString();
     }
     return result;
@@ -380,8 +480,8 @@ var TogglApi = /** @class */ (function () {
         this._reportApiBase = 'https://api.track.toggl.com/reports/api/v2';
         // From docs: Limits will and can change during time, but a safe window will be 1 request per second.
         this._stepOffDelay = 1100;
-        this._authToken = (authToken || '');
-        this._userAgent = (userAgent || APP_USER_AGENT);
+        this._authToken = authToken || '';
+        this._userAgent = userAgent || APP_USER_AGENT;
     }
     TogglApi.getResponseTemplate = function (success, raw) {
         if (success === void 0) { success = false; }
@@ -401,9 +501,9 @@ var TogglApi = /** @class */ (function () {
      */
     TogglApi.prototype._getAuthHeaders = function () {
         return {
-            "headers": {
-                "Content-Type": 'application/json',
-                "Authorization": this.assembleAuthHeader()
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: this.assembleAuthHeader()
             }
         };
     };
@@ -420,9 +520,9 @@ var TogglApi = /** @class */ (function () {
     };
     TogglApi.prototype.getDetailsReportAllPages = function (workspaceId, since, until, filterToBillable, startPage) {
         var MAX_PAGES = 30;
-        filterToBillable = typeof (filterToBillable) === 'boolean' ? filterToBillable : false;
+        filterToBillable = typeof filterToBillable === 'boolean' ? filterToBillable : false;
         // @TODO limit number of pages requested? Return userError if exceeded?
-        var currPage = (startPage || 1);
+        var currPage = startPage || 1;
         var done = false;
         try {
             var startResult = this.getDetailedReport(workspaceId, since, until, currPage, filterToBillable);
@@ -452,8 +552,8 @@ var TogglApi = /** @class */ (function () {
                         myConsole.log('Current Page = ' + currPage, 3 /* HIGH */);
                         var currResult = this.getDetailedReport(workspaceId, since, until, currPage, filterToBillable);
                         if (currResult.success && Array.isArray(currResult.raw['data'])) {
-                            fetchedNum = numPerPage * currPage;
-                            done = (fetchedNum < totalCount);
+                            fetchedNum += numPerPage * currPage;
+                            done = fetchedNum >= totalCount;
                             // Concat arrays
                             resultArr = resultArr.concat(currResult.raw['data']);
                         }
@@ -478,13 +578,13 @@ var TogglApi = /** @class */ (function () {
         }
         catch (e) {
             myConsole.error(e, 1 /* LOW */);
-            throw (e);
+            throw e;
         }
     };
     TogglApi.prototype.getDetailedReport = function (workspaceId, since, until, page, filterToBillable) {
-        filterToBillable = typeof (filterToBillable) === 'boolean' ? filterToBillable : false;
+        filterToBillable = typeof filterToBillable === 'boolean' ? filterToBillable : false;
         var filterToBillableString = filterToBillable == true ? 'yes' : 'both';
-        var currPage = (page || 1);
+        var currPage = page || 1;
         var requestParams = {
             workspace_id: workspaceId,
             user_agent: this._userAgent,
@@ -502,13 +602,13 @@ var TogglApi = /** @class */ (function () {
         }
         catch (e) {
             myConsole.error(e, 1 /* LOW */);
-            throw (e);
+            throw e;
         }
     };
     TogglApi.prototype.getSummaryReport = function (workspaceId, since, until, grouping, subgrouping, filterToBillable) {
         if (grouping === void 0) { grouping = 'projects'; }
         if (subgrouping === void 0) { subgrouping = 'time_entries'; }
-        filterToBillable = typeof (filterToBillable) === 'boolean' ? filterToBillable : false;
+        filterToBillable = typeof filterToBillable === 'boolean' ? filterToBillable : false;
         var filterToBillableString = filterToBillable == true ? 'yes' : 'both';
         var requestParams = {
             workspace_id: workspaceId,
@@ -535,7 +635,7 @@ var TogglApi = /** @class */ (function () {
         }
         catch (e) {
             myConsole.error(e, 1 /* LOW */);
-            throw (e);
+            throw e;
         }
     };
     TogglApi.prototype.getWeeklyReport = function () {
@@ -550,7 +650,7 @@ var TogglApi = /** @class */ (function () {
         }
         catch (e) {
             myConsole.error(e, 1 /* LOW */);
-            throw (e);
+            throw e;
         }
     };
     TogglApi.prototype.assembleAuthHeader = function () {
@@ -568,7 +668,7 @@ var TogglApi = /** @class */ (function () {
         var validResponse = true;
         var validAuth = true;
         var rateLimited = false;
-        if (typeof (response.getResponseCode) !== 'function') {
+        if (typeof response.getResponseCode !== 'function') {
             validResponse = false;
         }
         else {
@@ -585,7 +685,7 @@ var TogglApi = /** @class */ (function () {
                 }
             }
         }
-        if (typeof (response.getContentText) !== 'function') {
+        if (typeof response.getContentText !== 'function') {
             validResponse = false;
         }
         else {
@@ -631,7 +731,7 @@ var TogglApi = /** @class */ (function () {
             var val = requestParams[key];
             var stringifiedVal = '';
             // Date
-            if (typeof (val.getTime) === 'function') {
+            if (typeof val.getTime === 'function') {
                 stringifiedVal = Converters.formatDateForTogglApi(val);
             }
             // Array
@@ -640,14 +740,14 @@ var TogglApi = /** @class */ (function () {
                 stringifiedVal = val.toString();
             }
             // boolean
-            else if (typeof (val) === 'boolean') {
+            else if (typeof val === 'boolean') {
                 // Toggl accepts boolean as string, not binary, so keep to "true" or "false"
                 stringifiedVal = val.toString();
             }
-            else if (typeof (val) === 'number') {
+            else if (typeof val === 'number') {
                 stringifiedVal = val.toString();
             }
-            else if (typeof (val) === 'string') {
+            else if (typeof val === 'string') {
                 stringifiedVal = val;
             }
             else {
@@ -676,14 +776,14 @@ var TogglApi = /** @class */ (function () {
     };
     TogglApi.endpoints = {
         user: {
-            me_simple: "/me?with_related_data=false",
-            me_full: "/me?with_related_data=true",
-            workspaces: "/workspaces"
+            me_simple: '/me?with_related_data=false',
+            me_full: '/me?with_related_data=true',
+            workspaces: '/workspaces'
         },
         reports: {
-            weekly: "/weekly",
-            detailed: "/details",
-            summary: "/summary"
+            weekly: '/weekly',
+            detailed: '/details',
+            summary: '/summary'
         }
     };
     return TogglApi;
@@ -720,7 +820,8 @@ function getConfig() {
         var workspaceResponse = togglApiInst.getWorkspaceIds();
         if (workspaceResponse.success && Array.isArray(workspaceResponse.raw)) {
             var workspaceArr = workspaceResponse.raw;
-            var workspaceSelectConfigField = config.newSelectSingle()
+            var workspaceSelectConfigField = config
+                .newSelectSingle()
                 .setId('workspaceId')
                 .setName('Toggl Workspace')
                 .setHelpText('Select the Workspace to pull data from')
@@ -737,19 +838,19 @@ function getConfig() {
     }
     if (!foundWorkspaces) {
         // Fallback to plain text field
-        config.newTextInput()
+        config
+            .newTextInput()
             .setId('workspaceId')
             .setName('Toggl Workspace ID')
             .setHelpText('Numerical ID for your workspace')
             .setPlaceholder('123456');
     }
     // Set config general info
-    config.newInfo()
-        .setId('instructions')
-        .setText('Configure the connector for Toggl');
+    config.newInfo().setId('instructions').setText('Configure the connector for Toggl');
     // Require workspace ID (necessary for all report API calls)
     // Allow pre-filtering to just billable time
-    config.newCheckbox()
+    config
+        .newCheckbox()
         .setId('prefilterBillable')
         .setName('Pre-filter Billable')
         .setHelpText('Pre-filter all reports to just "billable" time (as configured in Toggl)');
@@ -776,12 +877,12 @@ function addField(fieldsObj, fieldToAdd) {
     chain.setId(fieldToAdd.id);
     chain.setName(fieldToAdd.name);
     // OPT: Description
-    if (typeof (fieldToAdd.description) === 'string') {
+    if (typeof fieldToAdd.description === 'string') {
         chain.setDescription(fieldToAdd.description);
     }
     // Semantics
     chain.setType(fieldToAdd.semantics.semanticType);
-    if (fieldToAdd.semantics.isReaggregatable && typeof (fieldToAdd.semantics.aggregationType) !== 'undefined') {
+    if (fieldToAdd.semantics.isReaggregatable && typeof fieldToAdd.semantics.aggregationType !== 'undefined') {
         chain.setIsReaggregatable(true);
         chain.setAggregation(fieldToAdd.semantics.aggregationType);
     }
@@ -850,12 +951,14 @@ function getData(request) {
     // Grab fields off incoming request
     var unorderedRequestedFieldIds = request.fields.map(function (field) { return field.name; }); // ['day','time','cost',...]
     var requestedFields = getFields().forIds(unorderedRequestedFieldIds);
-    var orderedRequestedFieldIds = requestedFields.asArray().map(function (field) { return field.getId() || ''; });
+    var orderedRequestedFieldIds = requestedFields.asArray().map(function (field) {
+        return field.getId() || '';
+    });
     // What the final result should look like
     var returnData = {
-        "cachedData": false,
-        "schema": requestedFields.build(),
-        "rows": []
+        cachedData: false,
+        schema: requestedFields.build(),
+        rows: []
     };
     // FLAG - request is missing required info
     var blocker = false;
@@ -865,16 +968,17 @@ function getData(request) {
     var foundInCache = false;
     // Grab date stuff off incoming request
     var lastRefreshedTime;
-    if (typeof (request.scriptParams) === 'object' && typeof (request.scriptParams.lastRefresh) === 'string') {
+    if (typeof request.scriptParams === 'object' && typeof request.scriptParams.lastRefresh === 'string') {
         lastRefreshedTime = new Date(request.scriptParams.lastRefresh);
     }
     else {
-        lastRefreshedTime = new Date(new Date().getTime() - (12 * 60 * 60 * 1000));
+        lastRefreshedTime = new Date(new Date().getTime() - 12 * 60 * 60 * 1000);
     }
     var dateRangeStart = DateUtils.forceDateToStartOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.startDate));
     var dateRangeEnd = DateUtils.forceDateToEndOfDay(Converters.gdsDateRangeDateToDay(request.dateRange.endDate));
     // Avoid cache if either end of range is within 2 days of today - since users are more likely to have recently edited entries within that span
-    if (DateUtils.getIsDateWithinXDaysOf(dateRangeStart, now, 2) || DateUtils.getIsDateWithinXDaysOf(dateRangeEnd, now, 2)) {
+    if (DateUtils.getIsDateWithinXDaysOf(dateRangeStart, now, 2) ||
+        DateUtils.getIsDateWithinXDaysOf(dateRangeEnd, now, 2)) {
         avoidCache = true;
     }
     // Certain things in what is requested can change how route used to retrieve data...
@@ -884,19 +988,27 @@ function getData(request) {
     var canUseSummaryReport = true;
     for (var x = 0; x < orderedRequestedFieldIds.length; x++) {
         var fieldId = orderedRequestedFieldIds[x];
-        canUseDetailedReport = !canUseDetailedReport ? canUseDetailedReport : getIsFieldInResponseEntryType(fieldId, 'TogglDetailedEntry');
-        canUseWeeklyProjectReport = !canUseWeeklyProjectReport ? canUseWeeklyProjectReport : getIsFieldInResponseEntryType(fieldId, 'TogglWeeklyProjectGroupedEntry');
-        canUseWeeklyUserReport = !canUseWeeklyUserReport ? canUseWeeklyUserReport : getIsFieldInResponseEntryType(fieldId, 'TogglWeeklyUserGroupedEntry');
-        canUseSummaryReport = !canUseSummaryReport ? canUseSummaryReport : getIsFieldInResponseEntryType(fieldId, 'TogglSummaryEntry');
+        canUseDetailedReport = !canUseDetailedReport
+            ? canUseDetailedReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglDetailedEntry');
+        canUseWeeklyProjectReport = !canUseWeeklyProjectReport
+            ? canUseWeeklyProjectReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglWeeklyProjectGroupedEntry');
+        canUseWeeklyUserReport = !canUseWeeklyUserReport
+            ? canUseWeeklyUserReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglWeeklyUserGroupedEntry');
+        canUseSummaryReport = !canUseSummaryReport
+            ? canUseSummaryReport
+            : getIsFieldInResponseEntryType(fieldId, 'TogglSummaryEntry');
     }
     var dateDimensionRequired = orderedRequestedFieldIds.indexOf('day') !== -1;
-    var projectDimensionRequired = (orderedRequestedFieldIds.indexOf('projectId') !== -1 || orderedRequestedFieldIds.indexOf('projectName') !== -1);
+    var projectDimensionRequired = orderedRequestedFieldIds.indexOf('projectId') !== -1 || orderedRequestedFieldIds.indexOf('projectName') !== -1;
     // Config options
     var workspaceId = -1;
     var prefilterBillable = false;
     // Extract config configParams
-    if (request.configParams && typeof (request.configParams) === 'object') {
-        if (typeof (request.configParams['workspaceId']) !== 'undefined') {
+    if (request.configParams && typeof request.configParams === 'object') {
+        if (typeof request.configParams['workspaceId'] !== 'undefined') {
             try {
                 workspaceId = parseInt(request.configParams['workspaceId'], 10);
             }
@@ -913,18 +1025,22 @@ function getData(request) {
     }
     // Early return if anything is missing
     if (blocker) {
-        cc.newUserError()
-            .setDebugText(blockerReason)
-            .setText(blockerReason)
-            .throwException();
+        cc.newUserError().setDebugText(blockerReason).setText(blockerReason).throwException();
         return false;
     }
     try {
         if (!dateDimensionRequired && canUseSummaryReport) {
             // If dateDimensionRequired is false, and uses has requested project or client details, we can query the summary endpoint and group by project|client
-            var grouping = (projectDimensionRequired ? 'projects' : 'clients');
+            var grouping = projectDimensionRequired ? 'projects' : 'clients';
             var res = TogglApi.getResponseTemplate(false);
-            var cacheKey = CacheWrapper.generateKeyFromInputs([workspaceId, dateRangeStart, dateRangeEnd, grouping, 'time_entries', prefilterBillable]);
+            var cacheKey = CacheWrapper.generateKeyFromInputs([
+                workspaceId,
+                dateRangeStart,
+                dateRangeEnd,
+                grouping,
+                'time_entries',
+                prefilterBillable
+            ]);
             if (!avoidCache) {
                 try {
                     var cacheValue = userCache.get(cacheKey);
@@ -966,7 +1082,12 @@ function getData(request) {
             myConsole.log('dateDimensionRequired', 3 /* HIGH */);
             // The only request type that a date dimension is the detailed report
             var res = TogglApi.getResponseTemplate(false);
-            var cacheKey = CacheWrapper.generateKeyFromInputs([workspaceId, dateRangeStart, dateRangeEnd, prefilterBillable]);
+            var cacheKey = CacheWrapper.generateKeyFromInputs([
+                workspaceId,
+                dateRangeStart,
+                dateRangeEnd,
+                prefilterBillable
+            ]);
             if (!avoidCache) {
                 try {
                     var cacheValue = userCache.get(cacheKey);
@@ -1053,8 +1174,8 @@ function mapTogglResponseToGdsFields(requestedFields, requestedFieldIds, request
                 var totalBillingTime = 0;
                 for (var s = 0; s < entryBase.items.length; s++) {
                     var subItem = entryBase.items[s];
-                    cBillingRate += typeof (subItem.rate) === 'number' ? subItem.rate : 0;
-                    var subItemBillingSum = typeof (subItem.sum) === 'number' ? subItem.sum : 0;
+                    cBillingRate += typeof subItem.rate === 'number' ? subItem.rate : 0;
+                    var subItemBillingSum = typeof subItem.sum === 'number' ? subItem.sum : 0;
                     totalBillingSum += subItemBillingSum;
                     if (subItemBillingSum > 0) {
                         // Time was billable
@@ -1110,7 +1231,7 @@ function mapTogglResponseToGdsFields(requestedFields, requestedFieldIds, request
             if (fieldMapping.id === 'day' && fieldMapping.semantics.conceptType === 'DIMENSION') {
                 // !!! - Special - !!!
                 // Sometimes Toggl will return entries that overlap days. This can lead to the dreaded "number of columns returned don't match requested" error from GDS if blinding returning a date that GDS did not actually request.
-                if (typeof (fieldMapping.togglMapping) === 'object') {
+                if (typeof fieldMapping.togglMapping === 'object') {
                     // Take care to make copy so not modifying reference
                     var augmentedMapping = {
                         id: fieldMapping.id,
@@ -1163,12 +1284,12 @@ function extractValueFromEntryWithMapping(entry, fieldMapping, entryTypeStringIn
             var foundVals = [];
             for (var x = 0; x < fields.length; x++) {
                 var val = recurseFromString(entry, fields[x]);
-                if (typeof (val) !== 'undefined') {
+                if (typeof val !== 'undefined') {
                     foundVals.push(val);
                 }
             }
             if (foundVals.length > 0) {
-                if ('formatter' in togglMapping && typeof (togglMapping['formatter']) === 'function') {
+                if ('formatter' in togglMapping && typeof togglMapping['formatter'] === 'function') {
                     extractedValue = togglMapping.formatter.apply(entry, foundVals);
                 }
                 else {
@@ -1181,28 +1302,8 @@ function extractValueFromEntryWithMapping(entry, fieldMapping, entryTypeStringIn
             }
         }
     }
-    extractedValue = typeof (extractedValue) !== 'undefined' ? extractedValue : VALUE_FOR_NULL;
+    extractedValue = typeof extractedValue !== 'undefined' ? extractedValue : VALUE_FOR_NULL;
     return extractedValue;
-}
-function testDateString() {
-    var startString = '2019-06-28';
-    var startDate = new Date(startString);
-    var forcedEnd = DateUtils.forceDateToEndOfDay(startDate);
-    var forcedStart = DateUtils.forceDateToStartOfDay(startDate);
-    var test = {
-        input: startString,
-        toString: startDate.toString(),
-        toUTCString: startDate.toUTCString(),
-        forceDateToStartOfDay: {
-            toString: forcedStart.toString(),
-            toUTCString: forcedStart.toUTCString()
-        },
-        forceDateToEndOfDay: {
-            toString: forcedEnd.toString(),
-            toUTCString: forcedEnd.toUTCString()
-        }
-    };
-    myConsole.log(test);
 }
 /**
  * Check if a given field can be found in the interface for the given response entry type (from the API)
@@ -1560,11 +1661,7 @@ function getAuthType() {
     // Enum
     var authTypes = cc.AuthType;
     // Return auth AuthType
-    return cc
-        .newAuthTypeResponse()
-        .setAuthType(authTypes.KEY)
-        .setHelpUrl(AUTH_HELP_URL)
-        .build();
+    return cc.newAuthTypeResponse().setAuthType(authTypes.KEY).setHelpUrl(AUTH_HELP_URL).build();
 }
 /**
  * @override - https://developers.google.com/datastudio/connector/auth#resetauth
@@ -1610,3 +1707,4 @@ function setCredentials(request) {
         errorCode: 'NONE'
     };
 }
+;

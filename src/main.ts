@@ -605,27 +605,6 @@ function extractValueFromEntryWithMapping(
     return extractedValue;
 }
 
-function testDateString() {
-    let startString = '2019-06-28';
-    let startDate: Date = new Date(startString);
-    let forcedEnd: Date = DateUtils.forceDateToEndOfDay(startDate);
-    let forcedStart: Date = DateUtils.forceDateToStartOfDay(startDate);
-    let test: any = {
-        input: startString,
-        toString: startDate.toString(),
-        toUTCString: startDate.toUTCString(),
-        forceDateToStartOfDay: {
-            toString: forcedStart.toString(),
-            toUTCString: forcedStart.toUTCString()
-        },
-        forceDateToEndOfDay: {
-            toString: forcedEnd.toString(),
-            toUTCString: forcedEnd.toUTCString()
-        }
-    };
-    myConsole.log(test);
-}
-
 /**
  * Check if a given field can be found in the interface for the given response entry type (from the API)
  * @param fieldId {string} - The ID of a field to check

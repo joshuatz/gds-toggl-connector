@@ -125,8 +125,8 @@ export class TogglApi {
                         myConsole.log('Current Page = ' + currPage, debugLevels.HIGH);
                         let currResult = this.getDetailedReport(workspaceId, since, until, currPage, filterToBillable);
                         if (currResult.success && Array.isArray(currResult.raw['data'])) {
-                            fetchedNum = numPerPage * currPage;
-                            done = fetchedNum < totalCount;
+                            fetchedNum += numPerPage * currPage;
+                            done = fetchedNum >= totalCount;
                             // Concat arrays
                             resultArr = resultArr.concat(currResult.raw['data']);
                         } else {
